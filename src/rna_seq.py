@@ -20,8 +20,9 @@ if __name__ == "__main__":
     neps = len(epsilons)
 
     args = parser.parse_args()
-    seed = args.seed
-    eps_idx = seed % neps
+    seed = 100 + (args.seed // neps)
+
+    eps_idx = args.seed % neps
     eps = epsilons[eps_idx] 
 
     np.random.seed(seed)
@@ -47,12 +48,18 @@ if __name__ == "__main__":
         l1_ball = ProbabilityBall(dist_type='l1', n=X_pca.shape[0], r=eps)
         gmm_tv = fit_owl(gmm_tv, l1_ball, kde=None, repeats=5, admmsteps=2000, verbose=False)
         mask = (gmm_tv.w >= 1.0)
-        wll = np.dot(gmm_tv.w, gmm_tv.log_likelihood_vector())
-        kl = np.nansum(xlogy(gmm_tv.w , gmm_tv.w)) - wll
+        ll_vec = gmm_tv.log_likelihood_vector()
+        wll = np.dot(gmm_tv.w,ll_vec)
+
+        probs = gmm_tv.w/np.sum(gmm_tv.w)
+        kl = np.nansum(xlogy(probs , probs)) - np.dot(probs, ll_vec)
+        num_inliers = np.sum(mask)
+
         results.append({"K": k, 
                         "epsilon": eps, 
                         "Weighted Log-likelihood": wll,
                         "KL divergence": kl,
+                        "Number of inliers": num_inliers,
                         "Adjusted Rand Index": adjusted_rand_score(groups_no_b, gmm_tv.z),
                         "Adjusted Rand Index (with batches)":  adjusted_rand_score(groups, gmm_tv.z),
                         "Adjusted Rand Index (subset)":  adjusted_rand_score(groups_no_b[mask], gmm_tv.z[mask]),
