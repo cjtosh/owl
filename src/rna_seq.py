@@ -15,11 +15,14 @@ from scipy.special import xlogy
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--eps', type=float, default=0.05, help="Robustness parameter.")
+
+    epsilons = np.array([0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+    neps = len(epsilons)
 
     args = parser.parse_args()
     seed = args.seed
-    eps = args.eps
+    eps_idx = seed % neps
+    eps = epsilons[eps_idx] 
 
     np.random.seed(seed)
     random.seed(seed)
