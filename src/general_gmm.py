@@ -12,11 +12,12 @@ class GeneralGMM(CModel):
     def __init__(self, 
         X: np.ndarray, ## Input samples [n samples x p features]
         K:int = 10, ## Number of components
+        hard:bool = True,
         w:np.ndarray = None ## Weights over the samples (set to None for uniform)
         ):
         self.X = deepcopy(X)
         n, self.p = X.shape
-        super().__init__(n=n, w=w)
+        super().__init__(n=n, w=w, hard=hard)
         self.K = K
         self.var_lower_bound = 0.1*np.min(pdist(self.X, metric='sqeuclidean')) ## Minimum distance between two points.
         self.solo_var = np.square(knn_bandwidth(self.X, k=5))
@@ -75,7 +76,7 @@ class GeneralGMM(CModel):
     def soft_M_step(self, **kwargs): 
         self.pi = np.mean(self.probs, axis=0)
         self.pi = self.pi/np.sum(self.pi)
-        
+
         for h in range(self.K):
             if self.pi[h] > 0:
                 self.mu[h, :] = np.average(self.X, axis=0, weights=self.probs[:,h])

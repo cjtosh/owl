@@ -18,9 +18,10 @@ from scipy.special import xlogy
 class CModel(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, n:int, w:np.ndarray=None, **kwargs):
+    def __init__(self, n:int, w:np.ndarray=None, hard:bool=True, **kwargs):
         self.n = n
         self.w = w
+        self.hard = hard
         if w is None:
             self.w = np.ones(self.n)
 
@@ -45,10 +46,10 @@ class CModel(object):
         raise NotImplementedError
 
     ## HARD EM 
-    def EM_step(self, n_steps:int=1, hard:bool=True):
+    def EM_step(self, n_steps:int=1, **kwargs):
         for _ in range(n_steps):
             self.E_step()
-            if hard:
+            if self.hard:
                 self.hard_M_step()
             else:
                 self.soft_M_step()
@@ -77,7 +78,7 @@ class CModel(object):
         p = np.zeros(self.n)
         for _ in trange(n_iters, disable=(not verbose)):
             ## Take some EM steps
-            self.EM_step(n_steps=emsteps, hard=False, **kwargs)
+            self.EM_step(n_steps=emsteps, **kwargs)
 
             ## Get likelihood vector of the model
             log_p_theta = self.log_likelihood_vector(**kwargs)

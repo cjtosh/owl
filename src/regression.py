@@ -7,11 +7,11 @@ from sklearn.preprocessing import StandardScaler
 
 
 class LinearRegression(CModel):
-    def __init__(self, X, y, w=None):
+    def __init__(self, X:np.ndarray, y:np.ndarray, hard:bool=True, w:np.ndarray=None):
         self.y = y
         self.X = X
         n, self.p = X.shape
-        super().__init__(n=n, w=w)
+        super().__init__(n=n, w=w, hard=hard)
         self.clf = LinReg()
 
     def EM_step(self, n_steps: int = 1, hard: bool = True):
@@ -31,11 +31,11 @@ class LinearRegression(CModel):
 
 
 class LogisticRegression(CModel):
-    def __init__(self, X:np.ndarray, y:np.ndarray, w=None):
+    def __init__(self, X:np.ndarray, y:np.ndarray, hard:bool=True, w:np.ndarray=None):
         assert np.all(np.isin(y, [0,1])), "Values must be either 0 or 1"
         self.y = y
         n, self.p = X.shape
-        super().__init__(n=n, w=w)
+        super().__init__(n=n, w=w, hard=hard)
         self.scaler = StandardScaler()
         self.scaler.fit(X=X)
         self.X_scaled = self.scaler.transform(X=X)

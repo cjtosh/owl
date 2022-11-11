@@ -20,11 +20,12 @@ class BernoulliMM(CModel):
         K:int, ## Number of components
         alpha:float = 0.5, ## Beta prior parameter
         beta:float = 0.5, ## Beta prior parameter
+        hard:bool = True,
         w:np.ndarray = None ## Weights over the samples (set to None for uniform)
         ):
         self.X = X
         n, self.p = X.shape
-        super().__init__(n=n, w=w)
+        super().__init__(n=n, w=w, hard=hard)
 
         self.alpha = alpha
         self.beta = beta
@@ -52,18 +53,17 @@ class BernoulliMM(CModel):
         self.wX = np.einsum('ij, i -> ij', self.X, self.w)
 
     def E_step(self):
-            lam = np.clip(self.lam, a_min=1e-10, a_max=None) ## Numerical stability
-            one_m_lam = np.clip(1.0-self.lam, a_min=1e-10, a_max=None) ## Numerical stability
+        lam = np.clip(self.lam, a_min=1e-10, a_max=None) ## Numerical stability
+        one_m_lam = np.clip(1.0-self.lam, a_min=1e-10, a_max=None) ## Numerical stability
 
-            log_pos_probs = np.dot(self.X, np.transpose(np.log(lam) ))
-            log_neg_probs =  np.dot( (1.- self.X), np.transpose(np.log(one_m_lam)) )
+        log_pos_probs = np.dot(self.X, np.transpose(np.log(lam) ))
+        log_neg_probs =  np.dot( (1.- self.X), np.transpose(np.log(one_m_lam)) )
 
-
-            with np.errstate(divide = 'ignore'):
-                log_pi = np.log(self.pi)
-            
-            self.log_probs = log_pi + log_neg_probs + log_pos_probs
-            self.z = np.argmax(self.log_probs, axis=1)
+        with np.errstate(divide = 'ignore'):
+            log_pi = np.log(self.pi)
+        
+        self.log_probs = log_pi + log_neg_probs + log_pos_probs
+        self.z = np.argmax(self.log_probs, axis=1)
 
     def hard_M_step(self, **kwargs):
         self.lam = 0. * self.lam
@@ -78,6 +78,7 @@ class BernoulliMM(CModel):
     def soft_M_step(self, **kwargs):
         probs = np.exp(self.log_probs - np.max(self.log_probs, axis=1, keepdims=True))
         probs = probs/np.sum(probs, axis=1, keepdims=True)
+        probs = probs*self.w[:,np.newaxis]
 
         self.pi = np.mean(probs, axis=0)
         self.lam = np.dot( np.transpose(probs), self.X )/(np.sum(probs, axis=0))[:,np.newaxis]

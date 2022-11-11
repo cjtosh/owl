@@ -11,11 +11,12 @@ class SphericalGMM(CModel):
     def __init__(self, 
         X: np.ndarray, ## Input samples [n samples x p features]
         K:int = 10, ## Number of components
+        hard:bool = True,
         w:np.ndarray = None, ## Weights over the samples (set to None for uniform)
         ):
         self.X = deepcopy(X)
         n, self.p = X.shape
-        super().__init__(n=n, w=w)
+        super().__init__(n=n, w=w, hard=hard)
 
         self.K = K
 
@@ -59,6 +60,8 @@ class SphericalGMM(CModel):
         log_probs = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True) )
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
+        self.probs = self.probs * self.w[:,np.newaxis] ## Reweight the probabilities
+
         self.z = np.argmax(log_probs, axis=1)
 
     def hard_M_step(self):
@@ -87,14 +90,21 @@ class SphericalGMM(CModel):
         self.pi = self.cluster_sizes/self.n
 
     def soft_M_step(self):
-        pi = np.mean(self.probs, axis=0, keepdims=True)
-        self.mu = np.einsum('ij, ik -> kj', self.X, self.probs)/(self.n * pi).transpose()
+        self.pi = np.mean(self.probs, axis=0)
+        self.pi = self.pi/np.sum(self.pi)
 
-        self.pi = np.squeeze(pi)
-        square_dists = cdist(self.X, self.mu, metric='sqeuclidean')
-        var = np.einsum('ik, ik -> k', square_dists, self.probs)/(self.n * self.pi  * self.p)
-        var = np.clip(var, a_min=self.var_lower_bound, a_max=None)
-        self.tau = 1.0/var
+        for h in range(self.K):
+            if self.pi[h] > 0:
+                self.mu[h, :] = np.average(self.X, axis=0, weights=self.probs[:,h])
+                sq_dists = np.sum(np.square( self.X - self.mu[h,:]), axis=1)
+                variance = np.average(sq_dists, weights=self.probs[:,h])
+                variance = np.clip(variance, a_min=self.var_lower_bound, a_max=None)
+                self.tau[h] = (self.p * self.n * self.pi[h])/variance
+            else:
+                idx = np.random.choice(self.n)
+                self.mu[h,:] = self.X[idx, :]
+                variance = self.solo_var
+                self.tau[h] = self.p/variance
 
     def log_likelihood_vector(self):
         log_prior_probs = np.log(self.pi[self.z])
