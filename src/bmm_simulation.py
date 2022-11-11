@@ -59,7 +59,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     results = []
     n_corrupt = int(epsilon*n)
     
-    bmm = BernoulliMM(X=X, K=K)
+    bmm = BernoulliMM(X=X, K=K, hard=False)
     mle = fit_mle(model=bmm)
 
     if corr_type=='max':
@@ -93,7 +93,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Corruption type": corr_type})
 
     ## Regular MLE
-    bmm = BernoulliMM(X=X, K=K)
+    bmm = BernoulliMM(X=X, K=K, hard=False)
     mle = fit_mle(model=bmm)
     cooccur_dist = mle.cooccurrence_distance(true_C)
     l1_dist = mle.mean_mae(lam)
@@ -107,6 +107,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Corruption type": corr_type})
 
     ## TV OWL
+    bmm = BernoulliMM(X=X, K=K, hard=True)
     tv_ball = ProbabilityBall(dist_type='l1', n=n, r=epsilon)
     owl_tv = fit_owl(bmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
     cooccur_dist = owl_tv.cooccurrence_distance(true_C)

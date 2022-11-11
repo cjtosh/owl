@@ -11,7 +11,7 @@ class SphericalGMM(CModel):
     def __init__(self, 
         X: np.ndarray, ## Input samples [n samples x p features]
         K:int = 10, ## Number of components
-        hard:bool = True,
+        hard:bool = True, ## Hard EM or soft EM
         w:np.ndarray = None, ## Weights over the samples (set to None for uniform)
         ):
         self.X = deepcopy(X)

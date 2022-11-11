@@ -18,7 +18,11 @@ from scipy.special import xlogy
 class CModel(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, n:int, w:np.ndarray=None, hard:bool=True, **kwargs):
+    def __init__(self,
+                 n:int, ## Number of input points
+                 hard:bool=True, ## Whether to do hard EM or soft EM 
+                 w:np.ndarray=None, ## Weights on the points
+                 **kwargs):
         self.n = n
         self.w = w
         self.hard = hard

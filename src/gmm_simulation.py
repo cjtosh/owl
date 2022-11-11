@@ -53,7 +53,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
     results = []
     n_corrupt = int(epsilon*n)
     
-    gmm = SphericalGMM(X, K=K)
+    gmm = SphericalGMM(X, K=K, hard=False)
 
     ## Fit a MLE
     mle = fit_mle(gmm)
@@ -92,7 +92,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
                     "Corruption scale": corr_scale})
 
     ## MLE on corrupted data
-    gmm = SphericalGMM(X, K=K)
+    gmm = SphericalGMM(X, K=K, hard=False)
 
     mle = fit_mle(gmm)
     mean_dist = mle.mean_mse(mu)
@@ -108,6 +108,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
                     "Corruption scale": corr_scale})
 
     ## OWL with TV dist
+    gmm = SphericalGMM(X, K=K, hard=True)
     tv_ball = ProbabilityBall(dist_type='l1', n=n, r=epsilon)
     owl_tv = fit_owl(gmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
 
@@ -124,6 +125,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
                     "Corruption scale": corr_scale})
 
     if use_mmd:
+        gmm = SphericalGMM(X, K=K, hard=True)
         owl_mmd = fit_mmd_owl(X, K, epsilon)
         mean_dist = owl_mmd.mean_mse(mu)
         hell_dist = owl_mmd.hellinger_distance(mu, tau)

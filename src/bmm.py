@@ -20,7 +20,7 @@ class BernoulliMM(CModel):
         K:int, ## Number of components
         alpha:float = 0.5, ## Beta prior parameter
         beta:float = 0.5, ## Beta prior parameter
-        hard:bool = True,
+        hard:bool = True, ## Hard EM or soft EM
         w:np.ndarray = None ## Weights over the samples (set to None for uniform)
         ):
         self.X = X
