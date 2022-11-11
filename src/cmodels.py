@@ -77,7 +77,7 @@ class CModel(object):
         p = np.zeros(self.n)
         for _ in trange(n_iters, disable=(not verbose)):
             ## Take some EM steps
-            self.EM_step(n_steps=emsteps, hard=True, **kwargs)
+            self.EM_step(n_steps=emsteps, hard=False, **kwargs)
 
             ## Get likelihood vector of the model
             log_p_theta = self.log_likelihood_vector(**kwargs)

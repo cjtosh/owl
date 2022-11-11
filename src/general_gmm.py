@@ -22,8 +22,8 @@ class GeneralGMM(CModel):
         self.solo_var = np.square(knn_bandwidth(self.X, k=5))
 
 
-        self.counter = 0
-        self.log_assign_probs = np.zeros(self.n)
+        # self.counter = 0
+        # self.log_assign_probs = np.zeros(self.n)
 
         ## Initialize via hierarchical clustering
         clus = AgglomerativeClustering(n_clusters=self.K, linkage='ward')
@@ -73,8 +73,9 @@ class GeneralGMM(CModel):
         self.pi = self.cluster_sizes/self.n
 
     def soft_M_step(self, **kwargs): 
-
         self.pi = np.mean(self.probs, axis=0)
+        self.pi = self.pi/np.sum(self.pi)
+        
         for h in range(self.K):
             if self.pi[h] > 0:
                 self.mu[h, :] = np.average(self.X, axis=0, weights=self.probs[:,h])
@@ -93,21 +94,23 @@ class GeneralGMM(CModel):
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True))
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
 
+        self.probs = self.probs * self.w[:,np.newaxis] ## Reweight the probabilities
+
         ## Hard EM -- assignment
         self.z = np.argmax(log_probs, axis=1)
 
-        ## Calculate assignment probabilities
-        self.log_assign_probs = log_probs[np.arange(self.n), self.z]
+        # ## Calculate assignment probabilities
+        # self.log_assign_probs = log_probs[np.arange(self.n), self.z]
 
-        self.counter = (self.counter + 1)%53
-        ## Redistribute very small clusters
-        if self.counter == 0:
-            for h in range(self.K):
-                mask = self.z == h
-                n_size = np.sum(mask)
+        # self.counter = (self.counter + 1)%53
+        # ## Redistribute very small clusters
+        # if self.counter == 0:
+        #     for h in range(self.K):
+        #         mask = self.z == h
+        #         n_size = np.sum(mask)
 
-                if (n_size < min(self.K, self.p)) and (n_size > 0):
-                    self.z[mask] = np.random.choice(self.K, size=n_size, replace=True)
+        #         if (n_size < min(self.K, self.p)) and (n_size > 0):
+        #             self.z[mask] = np.random.choice(self.K, size=n_size, replace=True)
         
 
     def log_likelihood_vector(self):
