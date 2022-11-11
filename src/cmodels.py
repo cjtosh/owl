@@ -78,7 +78,7 @@ class CModel(object):
         p = np.zeros(self.n)
         for _ in trange(n_iters, disable=(not verbose)):
             ## Take some EM steps
-            self.EM_step(n_steps=emsteps, **kwargs)
+            self.EM_step(n_steps=emsteps)
 
             ## Get likelihood vector of the model
             log_p_theta = self.log_likelihood_vector(**kwargs)
@@ -106,7 +106,7 @@ def fit_mle(model:CModel, repeats:int=25):
     curr_model = deepcopy(model)
     best_ll = -np.infty
     for _ in range(repeats):
-        curr_model.EM_step(n_steps=100, hard=False)
+        curr_model.EM_step(n_steps=100)
         ll = np.sum(curr_model.log_likelihood_vector())
         if ll > best_ll:
             best_ll = ll

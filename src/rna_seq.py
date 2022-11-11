@@ -43,7 +43,7 @@ if __name__ == "__main__":
     fname = os.path.join(folder, str(eps) + "_" + str(seed) + ".pkl")
     results = []
     for k in np.arange(2, 15):
-        gmm_tv = GeneralGMM(X=X_pca, K=k)
+        gmm_tv = GeneralGMM(X=X_pca, K=k, hard=False)
 
         l1_ball = ProbabilityBall(dist_type='l1', n=X_pca.shape[0], r=eps)
         gmm_tv = fit_owl(gmm_tv, l1_ball, kde=None, repeats=10, admmsteps=2000, verbose=False)
