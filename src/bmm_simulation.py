@@ -1,13 +1,23 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from bmm import BernoulliMM, pred_cooccurrence
+from bmm import BernoulliMM
 from balls_kdes import ProbabilityBall
 from cmodels import fit_mle, fit_owl
 import os, sys
 import pickle
 
 ADMMSTEPS=1000
+
+'''
+    This script implements a Bernoulli mixture model simulation.
+'''
+
+def pred_cooccurrence(lam: np.ndarray, pi: np.ndarray):
+    C_tens = np.einsum('hi, hj -> hij', lam, lam)
+    C = np.einsum('hij, h -> ij', C_tens, pi)
+    return(C)
+
 
 def obs_coocur(X, w=None):
     n, p = X.shape

@@ -7,6 +7,14 @@ from tqdm import trange
 from copy import deepcopy
 from scipy.special import xlogy
 
+'''
+    General class of "coarse" or "robust" probabalistic models.
+
+    To do maximum likelihood estimation, should implement reinitialize, E_step, and soft_M_step.
+
+    To do OWL estimation, should implement reinitialize, log_likelihood_vector, E_step and hard_M_step.
+'''
+
 class CModel(object):
     __metaclass__ = abc.ABCMeta
 
@@ -56,16 +64,16 @@ class CModel(object):
         assert non_neg, "Attempted to set w with negative entries."
         self.w = w
 
-    ## Alternating robust maximization.
+    ## Alternating optimization procedure.
     def am_robust(self, 
                   ball:ProbabilityBall, 
                   n_iters:int,
-                   kde:Union[KDE, KDEDensity] = None, 
-                   emsteps:int=20, 
-                   admmsteps:int=1000, 
-                   admmtol:float=10e-5, 
-                   verbose:bool=False, 
-                   **kwargs):
+                  kde:Union[KDE, KDEDensity] = None, 
+                  emsteps:int=20, 
+                  admmsteps:int=1000, 
+                  admmtol:float=10e-5, 
+                  verbose:bool=False, 
+                  **kwargs):
         p = np.zeros(self.n)
         for _ in trange(n_iters, disable=(not verbose)):
             ## Take some EM steps
@@ -85,7 +93,12 @@ class CModel(object):
 
             ## Set w
             self.set_w(w)
-        return
+
+'''
+    Fits a maximum likelihood model using EM with random restarts.
+
+    model must have implemented reinitialize, E_step, and soft_M_step.
+'''
 
 def fit_mle(model:CModel, repeats:int=25):
     best_model = deepcopy(model)
@@ -102,6 +115,17 @@ def fit_mle(model:CModel, repeats:int=25):
         curr_model.reinitialize(reset_w=True)
     return(best_model)
 
+'''
+    Fits an OWL model using alternating optimization with random restarts.
+
+    model must have implemented reinitialize, log_likelihood_vector, E_step and hard_M_step.
+
+    ball must have implemented get_prox_operator.
+
+    If kde is an instance of KDEDensity, then it must implement log_likelihood.
+
+    If kde is an instance of KDE, then it must implement row_sums, normalized_svd, and normalized_kernel_mat.
+'''
 
 def fit_owl(model:CModel, ball:ProbabilityBall, repeats=10, admmsteps=1000, kde:Union[KDE, KDEDensity]=None, verbose:bool=True):
     best_model = deepcopy(model)

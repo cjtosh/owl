@@ -6,11 +6,13 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import adjusted_rand_score
 
 
-def pred_cooccurrence(lam: np.ndarray, pi: np.ndarray):
-    C_tens = np.einsum('hi, hj -> hij', lam, lam)
-    C = np.einsum('hij, h -> ij', C_tens, pi)
-    return(C)
 
+
+'''
+    Implements a product Bernoulli mixture model.
+
+    Data points are stored in the rows of X.
+'''
 
 class BernoulliMM(CModel):
     def __init__(self, 

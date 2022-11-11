@@ -72,15 +72,26 @@ class GeneralGMM(CModel):
 
         self.pi = self.cluster_sizes/self.n
 
-    def soft_M_step(self, **kwargs): ## Not implemented
-        self.hard_M_step()
+    def soft_M_step(self, **kwargs): 
 
+        self.pi = np.mean(self.probs, axis=0)
+        for h in range(self.K):
+            if self.pi[h] > 0:
+                self.mu[h, :] = np.average(self.X, axis=0, weights=self.probs[:,h])
+                cov =  np.cov(self.X, rowvar=False, ddof=0, aweights=self.probs[:,h]) + self.var_lower_bound*np.eye(self.p)
+            else:
+                idx = np.random.choice(self.n)
+                self.mu[h,:] = self.X[idx, :]
+                cov = self.solo_var * np.eye(self.p)
+            self.prec_mats[h] = np.linalg.inv(cov)
 
     def E_step(self):
         ## D[i,h] = (x_i - mu_h)^T Prec_h (x_i - mu_h) 
         D = np.transpose(np.stack([np.einsum('ij, ik, jk -> i' , (self.X - self.mu[h]), self.X - self.mu[h], self.prec_mats[h])  for h in range(self.K) ]))
         _, log_dets = np.linalg.slogdet(self.prec_mats)
         log_probs = 0.5*log_dets - 0.5*D
+        probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True))
+        self.probs = probs/np.sum(probs, axis=1, keepdims=True)
 
         ## Hard EM -- assignment
         self.z = np.argmax(log_probs, axis=1)
@@ -98,8 +109,6 @@ class GeneralGMM(CModel):
                 if (n_size < min(self.K, self.p)) and (n_size > 0):
                     self.z[mask] = np.random.choice(self.K, size=n_size, replace=True)
         
-
-
 
     def log_likelihood_vector(self):
         log_prior_probs = np.log(self.pi[self.z])

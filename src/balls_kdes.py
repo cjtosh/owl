@@ -83,7 +83,7 @@ class ProbabilityBall():
 
 
 '''
-    Lightweight version of KDE class that only neeps track of the densities
+    Lightweight version of KDE class that only keeps track of the densities
 '''
 class KDEDensity():
     def __init__(self, X: np.ndarray, bandwidth: float, method:str = 'rbf'):
