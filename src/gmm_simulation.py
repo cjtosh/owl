@@ -6,6 +6,7 @@ from cmodels import fit_mle, fit_owl, fit_kernelized_owl
 from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
 import os, sys
 import pickle
+from tqdm import tqdm
 
 ADMMSTEPS = 5000
 
@@ -42,8 +43,8 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     mean_dist = mle.mean_mse(mu)
     hell_dist = mle.hellinger_distance(mu, tau)
 
-    print("Uncorrupted MLE mean dist:", mean_dist, file=sys.stderr)
-    print("Uncorrupted MLE Hellinger dist:", hell_dist, file=sys.stderr)
+    # print("Uncorrupted MLE mean dist:", mean_dist, file=sys.stderr)
+    # print("Uncorrupted MLE Hellinger dist:", hell_dist, file=sys.stderr)
 
     if corr_type=='max':
         lls = mle.log_likelihood_vector() ## Get likelihood values
@@ -51,8 +52,8 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
 
-    print("Number of corruptions:", len(inds_corrupt))
-    print("Fraction of corruptions:", len(inds_corrupt)/len(z))
+    # print("Number of corruptions:", len(inds_corrupt))
+    # print("Fraction of corruptions:", len(inds_corrupt)/len(z))
     for i in inds_corrupt:
         idxs = np.random.choice(p, size=int(0.5*p), replace=False)
         X[i][idxs] = corr_scale*np.random.choice([-1., 1.], size=len(idxs), replace=True)
@@ -144,8 +145,9 @@ if __name__ == "__main__":
     stdv_0 = 2.0
     stdv = 0.5
     mu, stdvs, pi, X, z = simulated_gmm_data(p=p, n=n, K=K, stdv_0=stdv_0, stdv=stdv)
+    epsilons = np.linspace(start=0.01, stop=0.25, num=10)
 
-    for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
+    for epsilon in tqdm(epsilons):
         results = simulation(X_=X, mu_=mu, stdvs_=stdvs, z_=z, K=K, epsilon=epsilon, corr_type=corr_type, corr_scale=corr_scale)
         full_results.extend(results)
 
