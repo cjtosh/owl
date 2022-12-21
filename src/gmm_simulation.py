@@ -108,7 +108,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     gmm = SphericalGMM(X, K=K, hard=True)
     bandiwdth_schedule = [knn_bandwidth(X, k) for k in [5, 10, 30, 50]]
     kde = KDE(X=X, bandwidth=bandiwdth_schedule[0], method='rbf')
-    owl_kern_tv = fit_kernelized_owl(gmm, tv_ball, kde, bandiwdth_schedule, admmsteps=ADMMSTEPS, verbose=False)
+    owl_kern_tv = fit_kernelized_owl(gmm, tv_ball, kde, bandiwdth_schedule, repeats=3, admmsteps=ADMMSTEPS, verbose=False)
     mean_dist = owl_kern_tv.mean_mse(mu)
     hell_dist = owl_kern_tv.hellinger_distance(mu, tau)
     ari = owl_kern_tv.adjusted_rand_index(z, uncorrupt_mask)
