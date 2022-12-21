@@ -46,7 +46,7 @@ if __name__ == "__main__":
         gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True)
 
         l1_ball = ProbabilityBall(dist_type='l1', n=X_pca.shape[0], r=eps)
-        gmm_tv = fit_owl(gmm_tv, l1_ball, kde=None, repeats=5, admmsteps=2000, verbose=False)
+        gmm_tv = fit_owl(gmm_tv, l1_ball, repeats=5, admmsteps=2000, verbose=False)
         mask = (gmm_tv.w >= 1.0)
         ll_vec = gmm_tv.log_likelihood_vector()
         wll = np.dot(gmm_tv.w,ll_vec)

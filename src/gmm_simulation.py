@@ -2,11 +2,10 @@ import numpy as np
 import argparse
 from copy import deepcopy
 from spherical_gmm import SphericalGMM
-from cmodels import fit_mle, fit_owl
+from cmodels import fit_mle, fit_owl, fit_kernelized_owl
 from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
 import os, sys
 import pickle
-from scipy.special import xlogy
 
 ADMMSTEPS = 5000
 
@@ -24,26 +23,7 @@ def simulated_gmm_data(p, n, K, stdv_0, stdv):
     
     return(mu, stdvs, pi, X, z)
 
-
-def fit_mmd_owl(X, K, epsilon, repeats=5):
-    n, _ = X.shape
-    gmm = SphericalGMM(X, K=K)
-    best_gmm = SphericalGMM(X, K=K)
-    best_ll = -np.infty
-    for k in [5, 15, 30, 50]:
-        bandwidth = knn_bandwidth(X, k)
-        kde = KDE(X=X, bandwidth=bandwidth, method='rbf')
-        mmd_ball = ProbabilityBall(dist_type='mmd', n=n, r=epsilon**2, kernel_matrix=kde.mmd_matrix())
-        gmm_mmd = fit_owl(gmm, mmd_ball, admmsteps=ADMMSTEPS, repeats=repeats, verbose=False)
-
-        prob = gmm_mmd.w/np.sum(gmm_mmd.w)
-        ll = np.dot(prob, gmm_mmd.log_likelihood_vector()) - np.nansum(xlogy(prob , prob))
-        if ll > best_ll:
-            best_ll = ll
-            best_gmm = deepcopy(gmm_mmd)
-    return(best_gmm)
-
-def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=True):
+def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     X = deepcopy(X_)
     z = deepcopy(z_)
     mu = deepcopy(mu_)
@@ -64,7 +44,6 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
 
     print("Uncorrupted MLE mean dist:", mean_dist, file=sys.stderr)
     print("Uncorrupted MLE Hellinger dist:", hell_dist, file=sys.stderr)
-
 
     if corr_type=='max':
         lls = mle.log_likelihood_vector() ## Get likelihood values
@@ -124,20 +103,23 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale, use_mmd=T
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
 
-    if use_mmd:
-        gmm = SphericalGMM(X, K=K, hard=True)
-        owl_mmd = fit_mmd_owl(X, K, epsilon)
-        mean_dist = owl_mmd.mean_mse(mu)
-        hell_dist = owl_mmd.hellinger_distance(mu, tau)
-        ari = owl_mmd.adjusted_rand_index(z, uncorrupt_mask)
+    ## Kernelized OWL with TV dist
+    gmm = SphericalGMM(X, K=K, hard=True)
+    bandiwdth_schedule = [knn_bandwidth(X, k) for k in [5, 10, 30, 50]]
+    kde = KDE(X=X, bandwidth=bandiwdth_schedule[0], method='rbf')
+    owl_kern_tv = fit_kernelized_owl(gmm, tv_ball, kde, bandiwdth_schedule, admmsteps=ADMMSTEPS, verbose=False)
+    mean_dist = owl_kern_tv.mean_mse(mu)
+    hell_dist = owl_kern_tv.hellinger_distance(mu, tau)
+    ari = owl_kern_tv.adjusted_rand_index(z, uncorrupt_mask)
 
-        results.append({"Method": "OWL (MMD)", 
-                        "Corruption fraction": epsilon, 
-                        "Mean MSE": mean_dist,
-                        "Hellinger distance": hell_dist,
-                        "Adjusted Rand Index": ari,
-                        "Corruption type": corr_type,
-                        "Corruption scale": corr_scale})
+    results.append({"Method": "OWL (TV-Kernelized)", 
+                    "Corruption fraction": epsilon, 
+                    "Mean MSE": mean_dist,
+                    "Hellinger distance": hell_dist,
+                    "Adjusted Rand Index": ari,
+                    "Corruption type": corr_type,
+                    "Corruption scale": corr_scale})
+
     return(results)
 
 
@@ -146,8 +128,6 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
     parser.add_argument('--corr_scale', type=float, default=5.0, help="The random seed.")
     parser.add_argument('--corr_type', type=str, default='max', help="The random seed.")
-    parser.add_argument('--drop_mmd', action=argparse.BooleanOptionalAction, help="Do we generate the umap plots?")
-
 
     args = parser.parse_args()
     seed = args.seed
@@ -155,7 +135,6 @@ if __name__ == "__main__":
     np.random.seed(seed)
     corr_type = args.corr_type
     corr_scale = args.corr_scale
-    use_mmd = not args.drop_mmd
 
     full_results = []
 
@@ -167,7 +146,7 @@ if __name__ == "__main__":
     mu, stdvs, pi, X, z = simulated_gmm_data(p=p, n=n, K=K, stdv_0=stdv_0, stdv=stdv)
 
     for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
-        results = simulation(X_=X, mu_=mu, stdvs_=stdvs, z_=z, K=K, epsilon=epsilon, corr_type=corr_type, corr_scale=corr_scale, use_mmd=use_mmd)
+        results = simulation(X_=X, mu_=mu, stdvs_=stdvs, z_=z, K=K, epsilon=epsilon, corr_type=corr_type, corr_scale=corr_scale)
         full_results.extend(results)
 
 

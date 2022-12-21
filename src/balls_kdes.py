@@ -96,6 +96,25 @@ class KDEDensity():
     def log_likelihood(self):
         return(self.log_likelihood_vals)
 
+
+def hat_kernel(distance_matrix:np.ndarray, bandwidth:float, dim:int):
+    indicator = (distance_matrix <= bandwidth).astype(float)
+
+    ## Volume of d-dimensional ball of radius bandwidth
+    vol_ = np.power(np.pi, 0.5*dim)*np.power(bandwidth, dim)/gamma(0.5*dim + 1.) 
+    kernel_mat = indicator/vol_
+
+    reg_inc_beta_args = indicator*(1.0 - 0.25*np.square(distance_matrix/bandwidth))
+    mmd_mat = betainc( 0.5*(dim + 1.), 0.5, reg_inc_beta_args)/vol_
+    return(kernel_mat, mmd_mat)
+
+def rbf_kernel(distance_matrix:np.ndarray, bandwidth:float, dim:int):
+    dmat = np.square(distance_matrix)/bandwidth
+
+    kernel_mat = np.power(1./(2.*np.pi*bandwidth), 0.5*dim)*np.exp(-0.5*dmat)
+    mmd_mat = np.power(1./(2.*np.pi*bandwidth), 0.5*dim)*np.exp(-0.25*dmat)
+    return(kernel_mat, mmd_mat)
+
 '''
     Class for computing kernel density estimates (and corresponding kernel matrices)
 '''
@@ -104,26 +123,29 @@ class KDE():
                  X: np.ndarray,
                  bandwidth: float,
                  method: str = 'rbf'): 
-        n, p = X.shape
-        pair_dists = pdist(X, metric='euclidean')
-        if method == 'hat': ## hat kernel (bandwidth = radius of ball)
-            dmat = squareform(pair_dists)
-            indicator = (dmat <= bandwidth).astype(float)
+        n, self.p = X.shape
+        self.method = method
+        self.distance_matrix = squareform(pdist(X, metric='euclidean'))
 
-            ## Volume of d-dimensional ball of radius bandwidth
-            vol_ = np.power(np.pi, 0.5*p)*np.power(bandwidth, p)/gamma(0.5*p + 1.) 
-            self.kernel_mat = indicator/vol_
-
-            reg_inc_beta_args = indicator*(1.0 - 0.25*np.square(dmat/bandwidth))
-            self.mmd_mat = betainc( 0.5*(p + 1.), 0.5, reg_inc_beta_args)/vol_
+        if self.method == 'hat': ## hat kernel (bandwidth = radius of ball)
+            self.kernel_mat, self.mmd_mat = hat_kernel(self.distance_matrix, bandwidth, self.p)
         else: ## rbf kernel (bandwidth = variance of Gaussian)
-            dmat = squareform(np.square(pair_dists))/bandwidth
-            self.kernel_mat = np.power(1./(2.*np.pi*bandwidth), 0.5*p)*np.exp(-0.5*dmat)
-            self.mmd_mat = np.power(1./(2.*np.pi*bandwidth), 0.5*p)*np.exp(-0.25*dmat)
+            self.kernel_mat, self.mmd_mat = rbf_kernel(self.distance_matrix, bandwidth, self.p)
+        
         self.rowsums = np.sum(self.kernel_mat, axis=1)
         self.normed_kernel_mat = self.kernel_mat/self.rowsums[:,np.newaxis]
         self.U, self.S, self.Vt = np.linalg.svd(self.normed_kernel_mat)
     
+    def reset_bandwidth(self, bandwidth):
+        if self.method == 'hat': ## hat kernel (bandwidth = radius of ball)
+            self.kernel_mat, self.mmd_mat = hat_kernel(self.distance_matrix, bandwidth, self.p)
+        else: ## rbf kernel (bandwidth = variance of Gaussian)
+            self.kernel_mat, self.mmd_mat = rbf_kernel(self.distance_matrix, bandwidth, self.p)
+
+        self.rowsums = np.sum(self.kernel_mat, axis=1)
+        self.normed_kernel_mat = self.kernel_mat/self.rowsums[:,np.newaxis]
+        self.U, self.S, self.Vt = np.linalg.svd(self.normed_kernel_mat)
+
     '''
         U, S, Vt: SVD of the row NORMALIZED kernel matrix: A_{ij} = K(x_i, x_j) / [sum_k K(x_i, x_k) ]
     '''
