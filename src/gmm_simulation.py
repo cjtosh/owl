@@ -147,17 +147,20 @@ if __name__ == "__main__":
     mu, stdvs, pi, X, z = simulated_gmm_data(p=p, n=n, K=K, stdv_0=stdv_0, stdv=stdv)
     epsilons = np.linspace(start=0.01, stop=0.25, num=10)
 
+    folder = "results/gmm_simulation/dim_" + str(p)
+    os.makedirs(folder, exist_ok=True)
+    fname = os.path.join(folder, corr_type+"_"+str(seed)+".pkl")
+
     for epsilon in tqdm(epsilons):
         results = simulation(X_=X, mu_=mu, stdvs_=stdvs, z_=z, K=K, epsilon=epsilon, corr_type=corr_type, corr_scale=corr_scale)
         full_results.extend(results)
+        with open(fname, 'wb') as io:
+            pickle.dump(full_results, io)
 
 
+    
 
-    folder = "results/gmm_simulation/dim_" + str(p)
-    os.makedirs(folder, exist_ok=True)
-
-    fname = os.path.join(folder, corr_type+"_"+str(seed)+".pkl")
-    with open(fname, 'wb') as io:
-        pickle.dump(full_results, io)
+    
+    
 
     
