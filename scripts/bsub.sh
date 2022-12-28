@@ -19,7 +19,7 @@ bsub -J 'randlin[1-50]' -W 1:00 -n 1 -R "rusage[mem=5]" -e output_logs/randlin_%
 
 
 ## Clustering
-bsub -J 'gmm[1-50]' -W 20:00 -n 4 -e output_logs/gmm_%I.err -o output_logs/gmm_%I.out sh scripts/gmm_simulation.sh
+bsub -J 'gmm[1-50]' -W 4:00 -n 3 -e output_logs/gmm_%I.err -o output_logs/gmm_%I.out sh scripts/gmm_simulation.sh
 
 # bsub -J 'bmm[1-50]' -W 1:30 -n 3 -e output_logs/bmm_%I.err -o output_logs/bmm_%I.out sh scripts/bmm_simulation.sh
 
