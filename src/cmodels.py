@@ -90,11 +90,9 @@ class CModel(object):
             ## Solve for p
             p = kl_minimization(log_q=log_p_theta, ball=ball, kde=kde, w_init=p, max_iter=admmsteps, eta=0.01, adjust_eta=True, tol=admmtol)
             p = np.clip(p, a_min=0.0, a_max=None)
-            if (kde is None) or isinstance(kde, KDEDensity):
-                w = self.n * p/np.sum(p)
-            else:
-                Ap = np.dot(kde.normalized_kernel_mat(), p)
-                w = self.n * Ap
+
+            ## Normalize to sum to 1
+            w = self.n * p/np.sum(p) 
 
             ## Set w
             self.set_w(w)

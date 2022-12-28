@@ -127,23 +127,24 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--corr_scale', type=float, default=5.0, help="The random seed.")
-    parser.add_argument('--corr_type', type=str, default='max', help="The random seed.")
-
+    parser.add_argument('--n', type=int, default=1000, help="The number of samples.")
+    parser.add_argument('--p', type=int, default=10, help="The dimension of the problem.")
+    parser.add_argument('--stdv', type=float, default=0.5, help="The scale of corruptions.")
+    parser.add_argument('--corr_scale', type=float, default=5.0, help="The scale of corruptions.")
+    parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions.")
     args = parser.parse_args()
     seed = args.seed
 
     np.random.seed(seed)
     corr_type = args.corr_type
     corr_scale = args.corr_scale
-
+    n = args.n
+    p = args.p
+    stdv = args.stdv
     full_results = []
 
-    n = 1000
     K = 3
-    p = 10
     stdv_0 = 2.0
-    stdv = 0.5
     mu, stdvs, pi, X, z = simulated_gmm_data(p=p, n=n, K=K, stdv_0=stdv_0, stdv=stdv)
     epsilons = np.linspace(start=0.01, stop=0.25, num=10)
 
