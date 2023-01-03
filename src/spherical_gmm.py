@@ -114,7 +114,7 @@ class SphericalGMM(CModel):
             return(log_prior_probs + 0.5*self.p*np.log(taus) - 0.5*taus*np.sum(np.square(self.X - self.mu[self.z]), axis=1))
         else:
             square_dists = cdist(self.X, self.mu, metric='sqeuclidean') ## n x K
-            expanded_result = np.log(self.pi) + 0.5*self.p*np.log(taus) - 0.5*taus*square_dists
+            expanded_result = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
             return(logsumexp(expanded_result, axis=1))
 
     def probability(self, new_X:np.ndarray):
