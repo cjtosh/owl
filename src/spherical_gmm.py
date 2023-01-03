@@ -2,6 +2,7 @@ import numpy as np
 from cmodels import CModel
 from balls_kdes import knn_bandwidth
 from scipy.spatial.distance import cdist, pdist
+from scipy.special import logsumexp
 from sklearn.cluster import AgglomerativeClustering
 from copy import deepcopy
 from scipy.optimize import linear_sum_assignment
@@ -107,10 +108,14 @@ class SphericalGMM(CModel):
                 self.tau[h] = self.p/variance
 
     def log_likelihood_vector(self):
-        log_prior_probs = np.log(self.pi[self.z])
-
-        taus = self.tau[self.z]
-        return(log_prior_probs + 0.5*self.p*np.log(taus) - 0.5*taus*np.sum(np.square(self.X - self.mu[self.z]), axis=1))
+        if self.hard:
+            log_prior_probs = np.log(self.pi[self.z])
+            taus = self.tau[self.z]
+            return(log_prior_probs + 0.5*self.p*np.log(taus) - 0.5*taus*np.sum(np.square(self.X - self.mu[self.z]), axis=1))
+        else:
+            square_dists = cdist(self.X, self.mu, metric='sqeuclidean') ## n x K
+            expanded_result = np.log(self.pi) + 0.5*self.p*np.log(taus) - 0.5*taus*square_dists
+            return(logsumexp(expanded_result, axis=1))
 
     def probability(self, new_X:np.ndarray):
         square_dists = cdist(new_X, self.mu, metric='sqeuclidean')

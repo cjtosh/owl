@@ -2,6 +2,7 @@ import numpy as np
 from balls_kdes import knn_bandwidth
 from cmodels import CModel
 from scipy.spatial.distance import cdist, pdist
+from scipy.special import logsumexp
 from sklearn.cluster import AgglomerativeClustering
 from copy import deepcopy
 from sklearn.metrics import adjusted_rand_score
@@ -100,31 +101,24 @@ class GeneralGMM(CModel):
         ## Hard EM -- assignment
         self.z = np.argmax(log_probs, axis=1)
 
-        # ## Calculate assignment probabilities
-        # self.log_assign_probs = log_probs[np.arange(self.n), self.z]
-
-        # self.counter = (self.counter + 1)%53
-        # ## Redistribute very small clusters
-        # if self.counter == 0:
-        #     for h in range(self.K):
-        #         mask = self.z == h
-        #         n_size = np.sum(mask)
-
-        #         if (n_size < min(self.K, self.p)) and (n_size > 0):
-        #             self.z[mask] = np.random.choice(self.K, size=n_size, replace=True)
-        
-
     def log_likelihood_vector(self):
-        log_prior_probs = np.log(self.pi[self.z])
+        if self.hard:
+            log_prior_probs = np.log(self.pi[self.z])
 
-        diff = self.X - self.mu[self.z]
-        sq_mahal = np.einsum('ij, ik, ijk -> i' , diff, diff, self.prec_mats[self.z])
-        _, log_dets = np.linalg.slogdet(self.prec_mats)
+            diff = self.X - self.mu[self.z]
+            sq_mahal = np.einsum('ij, ik, ijk -> i' , diff, diff, self.prec_mats[self.z])
+            _, log_dets = np.linalg.slogdet(self.prec_mats)
 
-        return(log_prior_probs + 0.5*log_dets[self.z] - 0.5*sq_mahal)
+            return(log_prior_probs + 0.5*log_dets[self.z] - 0.5*sq_mahal)
+        else:
+            log_prior_probs = np.log(self.pi)
+            _, log_dets = np.linalg.slogdet(self.prec_mats)
+            log_mat = np.zeros((self.n, self.K))
+            for k in range(self.K):
+                log_mat[:,k] = log_prior_probs[k] + 0.5*log_dets[k] - 0.5*(cdist(self.X, (self.mu[k,:])[np.newaxis,:], metric='mahalanobis', VI=self.prec_mats[k])).squeeze()
+            return(logsumexp(log_mat, axis=1))
 
     def probability(self, new_X:np.ndarray):
-
         ## D[i,h] = (x_i - mu_h)^T Prec_h (x_i - mu_h) 
         D = np.transpose(np.stack([np.einsum('ij, ik, jk -> i' , new_X - self.mu[h], new_X - self.mu[h], self.prec_mats[h])  for h in range(self.K) ]))
 

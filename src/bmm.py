@@ -1,6 +1,6 @@
 import numpy as np
 from cmodels import CModel
-from scipy.special import xlogy
+from scipy.special import xlogy, logsumexp
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import adjusted_rand_score
@@ -85,14 +85,23 @@ class BernoulliMM(CModel):
         
 
     def log_likelihood_vector(self):
-        with np.errstate(divide = 'ignore'):
-            log_prior_probs = np.log(self.pi[self.z])
-            log_pos_probs = np.sum(xlogy(self.X, np.clip(self.lam[self.z],  a_min=10e-20, a_max=None) ), axis=1)
-            log_neg_probs = np.sum(xlogy(1.- self.X, np.clip(1. - self.lam[self.z], a_min=10e-20, a_max=None)), axis=1)
+        if self.hard:
+            with np.errstate(divide = 'ignore'):
+                log_prior_probs = np.log(self.pi[self.z])
+                log_pos_probs = np.sum(xlogy(self.X, np.clip(self.lam[self.z],  a_min=10e-20, a_max=None) ), axis=1)
+                log_neg_probs = np.sum(xlogy(1. - self.X, np.clip(1. - self.lam[self.z], a_min=10e-20, a_max=None)), axis=1)
 
-        ll_vec = log_prior_probs + log_pos_probs + log_neg_probs
+            return(log_prior_probs + log_pos_probs + log_neg_probs)
+        else:
+            log_mat = np.zeros((self.n, self.K))
+            with np.errstate(divide = 'ignore'):
+                log_prior_probs = np.log(self.pi)
+                pos_lam =  np.clip(self.lam,  a_min=10e-20, a_max=None) ## K x p
+                neg_lam = np.clip(1. - self.lam, a_min=10e-20, a_max=None) ## K x p
+                for k in range(self.K):
+                    log_mat[:,k] = log_prior_probs[k] +  np.sum(xlogy(self.X, pos_lam[k,:]), axis=1) + np.sum(xlogy(1. - self.X, neg_lam[k,:]), axis=1)
 
-        return(ll_vec)
+            return(logsumexp(log_mat, axis=1))
 
     def cooccurrence(self) -> np.ndarray:
         C_tens = np.einsum('hi, hj -> hij', self.lam, self.lam)
