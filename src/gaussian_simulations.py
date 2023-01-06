@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import argparse
 import scipy.stats as stats
+from scipy.special import xlogy
 from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
 from gaussian import Gaussian
 from tqdm import tqdm
@@ -63,14 +64,26 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
+
     ## OWL - Kernelized TV
-    g = Gaussian(X=X)
-    l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
-    bandwidth = knn_bandwidth(X, 5)
-    kde = KDE(X, bandwidth)
-    g.am_robust(ball=l1_ball, n_iters=10, kde=kde)
-    hell_dist = g.hellinger(mu, cov)
-    mu_dist = np.mean(np.square(mu - g.mu ))
+    best_ll = -np.infty
+    hell_dist = None
+    mu_dist = None
+    selected_k = None
+    for k in [5, 10, 25, 50]:
+        g = Gaussian(X=X)
+        l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
+        bandwidth = knn_bandwidth(X, k)
+        kde = KDE(X, bandwidth)
+        g.am_robust(ball=l1_ball, n_iters=10, kde=kde)
+        prob = g.w/np.sum(g.w)
+        ll = np.dot(prob, g.log_likelihood_vector()) - np.nansum(xlogy(prob , prob))
+        if ll > best_ll:
+            best_ll = ll
+            hell_dist = g.hellinger(mu, cov)
+            mu_dist = np.mean(np.square(mu - g.mu ))
+            selected_k = k
+    print(selected_k)
     results.append({"Method": "OWL (Kernelized - TV)", 
                     "Corruption fraction": epsilon, 
                     "Hellinger distance": hell_dist,
@@ -106,7 +119,7 @@ if __name__ == "__main__":
     X = stats.multivariate_normal.rvs(mean=mu, cov=cov, size=n, random_state=None)
 
     full_results = []
-    for epsilon in tqdm(np.linspace(start=0.01, stop=0.25, num=10)):
+    for epsilon in tqdm(np.linspace(start=0.01, stop=0.5, num=15)):
         results = gaussian_corruption_comparison(X, mu, cov, epsilon, scale, corr_type)
         full_results.extend(results)
         with open(fname, 'wb') as io:
