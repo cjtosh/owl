@@ -97,7 +97,7 @@ if __name__ == "__main__":
     n = args.n
     corr_type = args.corr_type
 
-    folder = "results/gaussian"
+    folder = os.path.join("results/gaussian", "dim_"+str(dim))
     os.makedirs(folder, exist_ok=True)
     fname = os.path.join(folder, corr_type+"_"+str(seed)+".pkl")
 
