@@ -35,7 +35,6 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
     
-    print(len(inds_corrupt))
     for idx in inds_corrupt:
         X[idx,:] = np.random.uniform(low=-scale, high=scale, size=X[idx,:].shape)
 
