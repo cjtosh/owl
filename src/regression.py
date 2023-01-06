@@ -14,7 +14,7 @@ class LinearRegression(CModel):
         super().__init__(n=n, w=w, hard=hard)
         self.clf = LinReg()
 
-    def EM_step(self, n_steps: int = 1, hard: bool = True):
+    def EM_step(self, n_steps: int = 1, **kwargs):
         if n_steps > 0:
             self.clf.fit(X=self.X, y=self.y, sample_weight=self.w)
             self.resid = self.y - self.predict(self.X)
@@ -41,7 +41,7 @@ class LogisticRegression(CModel):
         self.X_scaled = self.scaler.transform(X=X)
         self.clf = LogReg(penalty='none', max_iter=300)
 
-    def EM_step(self, n_steps: int = 1, hard: bool = True):
+    def EM_step(self, n_steps: int = 1, **kwargs):
         if n_steps > 0:
             self.clf.fit(X=self.X_scaled, y=self.y, sample_weight=self.w)
 
