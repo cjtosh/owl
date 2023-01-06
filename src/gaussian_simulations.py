@@ -83,7 +83,7 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
             hell_dist = g.hellinger(mu, cov)
             mu_dist = np.mean(np.square(mu - g.mu ))
             selected_k = k
-    print(selected_k)
+    
     results.append({"Method": "OWL (Kernelized - TV)", 
                     "Corruption fraction": epsilon, 
                     "Hellinger distance": hell_dist,
