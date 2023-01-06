@@ -5,5 +5,5 @@ conda activate py39
 
 seed=$(($LSB_JOBINDEX + 100))
 
-python src/gaussian_simulations.py --seed $seed --corr_type 'max' --n 200 --scale 10.0 --dim 10
-python src/gaussian_simulations.py --seed $seed --corr_type 'rand' --n 200 --scale 10.0 --dim 10
+python src/gaussian_simulations.py --seed $seed --corr_type 'max' --n 200 --scale 10.0 --dim 50
+python src/gaussian_simulations.py --seed $seed --corr_type 'rand' --n 200 --scale 10.0 --dim 50
