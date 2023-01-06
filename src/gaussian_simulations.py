@@ -5,7 +5,7 @@ import argparse
 import scipy.stats as stats
 from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
 from gaussian import Gaussian
-
+from tqdm import tqdm
 
 
 def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarray, epsilon:float, scale:float, corr_type:str):
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     X = stats.multivariate_normal.rvs(mean=mu, cov=cov, size=n, random_state=None)
 
     full_results = []
-    for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
+    for epsilon in tqdm(np.linspace(start=0.01, stop=0.25, num=10)):
         results = gaussian_corruption_comparison(X, mu, cov, epsilon, scale, corr_type)
         full_results.extend(results)
         with open(fname, 'wb') as io:
