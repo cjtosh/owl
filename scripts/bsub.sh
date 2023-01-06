@@ -27,4 +27,4 @@ bsub -J 'rna[1-270]' -W 1:00 -e output_logs/rna_%I.err -o output_logs/rna_%I.out
 
 ## Gaussian
 
-bsub -J 'gaussian[1-50]' -W 1:00 -n 2 -e output_logs/gaussian_%I.err -o output_logs/gaussian_%I.out sh scripts/gaussian_simulation.sh
+bsub -J 'gaussian[1-50]' -W 0:30 -n 2 -e output_logs/gaussian_%I.err -o output_logs/gaussian_%I.out sh scripts/gaussian_simulation.sh
