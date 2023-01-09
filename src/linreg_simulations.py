@@ -50,7 +50,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     
     resid_corrupt = resids[inds_corrupt]
     # y_train[inds_corrupt] = np.where(resid_corrupt>0, max_val, min_val)
-    y_train[inds_corrupt] = 2*np.where(resid_corrupt>0, v, -v)
+    y_train[inds_corrupt] = 3*np.where(resid_corrupt>0, v, -v)
 
 
     ## MLE
