@@ -1,6 +1,7 @@
 import os
 import pickle
 import numpy as np
+import pandas as pd
 from scipy.io import loadmat
 import argparse
 from balls_kdes import ProbabilityBall
@@ -74,7 +75,6 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Train MSE": train_mse,
                     "Corruption type": corr_type})
 
-
     ## Scale the data
     scaler = StandardScaler()
     scaler.fit(X=X_train)
@@ -145,13 +145,18 @@ if __name__ == "__main__":
     os.makedirs(folder, exist_ok=True)
 
     if args.dataset=='qsar':
-        qsar = loadmat("data/qsar.mat")
-        X_train = qsar['X_train']
-        X_test = qsar['X_test']
-        y_train = np.squeeze(qsar['y_train'])
-        y_test = np.squeeze(qsar['y_test'])
-        X = np.vstack((X_train, X_test))
-        y = np.concatenate((y_train, y_test))
+        # qsar = loadmat("data/qsar.mat")
+        # X_train = qsar['X_train']
+        # X_test = qsar['X_test']
+        # y_train = np.squeeze(qsar['y_train'])
+        # y_test = np.squeeze(qsar['y_test'])
+        # X = np.vstack((X_train, X_test))
+        # y = np.concatenate((y_train, y_test))
+
+        df = pd.read_csv("data/qsar.csv")
+        y = df['pXC50'].values
+        df.drop(columns=['target_id', 'molecule_id', 'pXC50', 'dataset_id'], inplace=True)
+        X = df.values
 
         ## Make our own train-test split
         test_frac = 0.2
