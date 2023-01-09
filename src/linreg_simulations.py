@@ -169,7 +169,7 @@ if __name__ == "__main__":
         y_train = y[train_mask]
         y_test = y[~train_mask]
         
-        pca = PCA(n_components=10)
+        pca = PCA(n_components=50)
         pca.fit(X[train_mask])
         X_train = pca.transform(X[train_mask])
         X_test = pca.transform(X[~train_mask])
