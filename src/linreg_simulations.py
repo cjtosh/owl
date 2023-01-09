@@ -32,8 +32,9 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
     resids = y_train - lr.predict(X_train)
-    max_val = np.max(y_train)
-    min_val = np.min(y_train)
+    # max_val = np.max(y_train)
+    # min_val = np.min(y_train)
+    v = np.max(np.abs(y_train))
 
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
@@ -48,7 +49,8 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
         inds_corrupt = np.random.choice(n_train, size=n_corrupt, replace=False)
     
     resid_corrupt = resids[inds_corrupt]
-    y_train[inds_corrupt] = np.where(resid_corrupt>0, max_val, min_val)
+    # y_train[inds_corrupt] = np.where(resid_corrupt>0, max_val, min_val)
+    y_train[inds_corrupt] = 2*np.where(resid_corrupt>0, v, -v)
 
 
     ## MLE
