@@ -29,8 +29,11 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     n_corrupt = int(epsilon*n_train)
     lr = LinearRegression(X=X_train, y=y_train)
     lr.EM_step()
+    
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
+    r2 = lr.r2_score(X_test, y_test)
+
     resids = y_train - lr.predict(X_train)
     # max_val = np.max(y_train)
     # min_val = np.min(y_train)
@@ -40,6 +43,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
 
     if corr_type=='max':
@@ -58,10 +62,12 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     lr.EM_step()
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
+    r2 = lr.r2_score(X_test, y_test)
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
     
     ## Robust logistic regression   
@@ -71,10 +77,12 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     
     train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(rob_lr.predict(X_test) - y_test))
+    r2 = rob_lr.r2_score(X_test, y_test)
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
 
     ## Scale the data
@@ -86,13 +94,15 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     ## Ridge regression with cross validation
     clf = RidgeCV(cv=3)
     clf.fit(X=X_scale, y=y_train)
-
+    
     train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
     test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
+    r2 = clf.score(X_test_scale,y_test)
     results.append({"Method": "Ridge regression (CV)", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
 
     ## RANSAC regression
@@ -100,33 +110,37 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     clf.fit(X=X_scale, y=y_train)
     train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
     test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
+    r2 = clf.score(X_test_scale,y_test)
     results.append({"Method": "RANSAC MLE", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
 
     ## Theil-Sen
-    nsub = int((1-2*epsilon)*len(y_train))
-    clf = TheilSenRegressor(n_subsamples=nsub)
-    clf.fit(X=X_scale, y=y_train)
-    train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
-    test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
-    results.append({"Method": "Theil-Sen Regression", 
-                    "Corruption fraction": epsilon, 
-                    "Test MSE": test_mse,
-                    "Train MSE": train_mse,
-                    "Corruption type": corr_type})
+    # nsub = int((1-2*epsilon)*len(y_train))
+    # clf = TheilSenRegressor(n_subsamples=nsub)
+    # clf.fit(X=X_scale, y=y_train)
+    # train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
+    # test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
+    # results.append({"Method": "Theil-Sen Regression", 
+    #                 "Corruption fraction": epsilon, 
+    #                 "Test MSE": test_mse,
+    #                 "Train MSE": train_mse,
+    #                 "Corruption type": corr_type})
 
     # clf = HuberRegressor()
     # clf.fit(X=X_scale, y=y_train)
     clf = HuberRegression(X_scale, y_train)
     train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
     test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
+    r2 = clf.score(X_test_scale,y_test)
     results.append({"Method": "Huber Regression", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
                     "Train MSE": train_mse,
+                    "Test R^2": r2,
                     "Corruption type": corr_type})
     return(results)
 
