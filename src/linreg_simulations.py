@@ -29,7 +29,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     n_corrupt = int(epsilon*n_train)
     lr = LinearRegression(X=X_train, y=y_train)
     lr.EM_step()
-    
+
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
     r2 = lr.r2_score(X_test, y_test)
@@ -63,6 +63,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
     r2 = lr.r2_score(X_test, y_test)
+    
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
@@ -78,6 +79,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(rob_lr.predict(X_test) - y_test))
     r2 = rob_lr.r2_score(X_test, y_test)
+
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Test MSE": test_mse,
