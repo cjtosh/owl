@@ -1,31 +1,24 @@
 import abc
 import numpy as np
-from typing import Union
-from balls_kdes import KDE, KDEDensity, ProbabilityBall
+from ball import ProbabilityBall
+from kde import KDE
 from i_projection import kl_minimization
 from tqdm import trange
 from copy import deepcopy
 from scipy.special import xlogy
 
 '''
-    General class of "coarse" or "robust" probabalistic models.
-
-    To do maximum likelihood estimation, should implement reinitialize, E_step, and soft_M_step.
-
-    To do OWL estimation, should implement reinitialize, log_likelihood_vector, E_step and hard_M_step.
+    General class of models that can be used with OWL methodology. 
 '''
-
-class CModel(object):
+class OWLModel(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self,
                  n:int, ## Number of input points
-                 hard:bool=True, ## Whether to do hard EM or soft EM 
                  w:np.ndarray=None, ## Weights on the points
                  **kwargs):
         self.n = n
         self.w = w
-        self.hard = hard
         if w is None:
             self.w = np.ones(self.n)
 
@@ -34,58 +27,37 @@ class CModel(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def log_likelihood_vector(self, **kwargs) -> np.ndarray:
+    def log_likelihood(self, **kwargs) -> np.ndarray:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def E_step(self, **kwargs):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def hard_M_step(self, **kwargs):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def soft_M_step(self, **kwargs):
-        raise NotImplementedError
-
-    ## HARD EM 
-    def EM_step(self, n_steps:int=1, **kwargs):
-        for _ in range(n_steps):
-            self.E_step()
-            if self.hard:
-                self.hard_M_step()
-            else:
-                self.soft_M_step()
-
-    @abc.abstractmethod
-    def probability(self, new_X:np.ndarray, **kwargs):
+    def maximize_weighted_likelihood(self, **kwargs):
         raise NotImplementedError
 
     def set_w(self, w:np.ndarray, **kwargs):
-        ## w must be length n, non-negative, and sum to n
+        ## w must be length n and non-negative
         non_neg = np.all(w >= 0)
         assert len(w) == self.n, "Attempted to set w with incorrect length vector."
         assert non_neg, "Attempted to set w with negative entries."
         self.w = w
 
     ## Alternating optimization procedure.
-    def am_robust(self, 
-                  ball:ProbabilityBall, 
-                  n_iters:int,
-                  kde:Union[KDE, KDEDensity] = None, 
-                  emsteps:int=20, 
-                  admmsteps:int=1000, 
-                  admmtol:float=10e-5, 
-                  verbose:bool=False, 
-                  **kwargs):
+    def fit_owl(self, 
+                ball:ProbabilityBall, 
+                n_iters:int,
+                kde:KDE = None, 
+                admmsteps:int=1000, 
+                admmtol:float=10e-5, 
+                verbose:bool=False, 
+                **kwargs):
+        
         p = np.zeros(self.n)
         for _ in trange(n_iters, disable=(not verbose)):
             ## Take some EM steps
-            self.EM_step(n_steps=emsteps)
+            self.maximize_weighted_likelihood()
 
             ## Get likelihood vector of the model
-            log_p_theta = self.log_likelihood_vector(**kwargs)
+            log_p_theta = self.log_likelihood(**kwargs)
 
             ## Solve for p
             p = kl_minimization(log_q=log_p_theta, ball=ball, kde=kde, w_init=p, max_iter=admmsteps, eta=0.01, adjust_eta=True, tol=admmtol)

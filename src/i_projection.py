@@ -1,18 +1,17 @@
 import numpy as np
 from numpy.linalg import norm, multi_dot
-from balls_kdes import ProbabilityBall, KDE, KDEDensity
+from ball import ProbabilityBall
+from kde import KDE
 from proximal import ProximalOperator, ProxSimplex, ProxKLLogScale
 from copy import deepcopy
-from typing import Union
-from joblib import Parallel, delayed
 
 
 '''
     Finds w that minimizes (kernel adjusted) KL objective.
 '''
-def kl_minimization(log_q: np.ndarray,      ## log of q probabilities
-                    ball: ProbabilityBall,  ## ProbabilityBall object encoding projection operator
-                    kde:Union[KDE, KDEDensity]=None,  ## KDE object (set to None if we are not doing kernel density adjustment)
+def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
+                    ball:ProbabilityBall,   ## ProbabilityBall object encoding projection operator
+                    kde:KDE=None,           ## KDE object (set to None if we are not doing kernel density adjustment)
                     w_init:np.ndarray=None, ## Initial guess
                     max_iter:int=1000,      ## Maximum number of admm steps to take
                     eta:float=0.01,         ## Initial admm penalty parameter
@@ -26,15 +25,7 @@ def kl_minimization(log_q: np.ndarray,      ## log of q probabilities
         svd = None
         A = None
         prox_ops = [simplex_prox, kl_prox, ball_prox]
-    elif isinstance(kde, KDEDensity):
-        log_likelihood_vals = kde.log_likelihood()
-        svd = None
-        A = None
-        shifted_log_q = log_q - log_likelihood_vals
-        kl_prox = ProxKLLogScale(log_q=shifted_log_q, tilt=False)
-        ball_prox = ball.get_prox_operator()
-        prox_ops = [simplex_prox, kl_prox, ball_prox]
-    elif isinstance(kde, KDE):
+    else:
         rowsums = kde.row_sums()
         U, S, Vt = kde.normalized_svd()
         A = kde.normalized_kernel_mat()
@@ -42,14 +33,10 @@ def kl_minimization(log_q: np.ndarray,      ## log of q probabilities
 
         ## KL term gets shifted + tilted by A
         kl_prox = ProxKLLogScale(log_q=shifted_log_q, tilt=True)
-        if ball.dist_type == 'mmd':
-            ball_prox = ball.get_prox_operator()
-        else:
-            ball_prox = ball.get_prox_operator(tilt=True)
+        ball.get_prox_operator(tilt=True)
         svd = (U, S, Vt)
 
         prox_ops = [simplex_prox, kl_prox, ball_prox]
-
     
     w = consensus_admm(prox_ops=prox_ops, 
                        dim=len(log_q),
@@ -115,12 +102,7 @@ def consensus_admm(prox_ops:list[ProximalOperator],
     
     for _ in range(max_iter):
         ## First update the primal variables
-        if num_workers > 1:
-            jobs = (delayed(prox_ops[i])(z=Az, y=y[i], eta=etas[i]) if tilted_mask[i] else delayed(prox_ops[i])(z=z, y=y[i], eta=etas[i]) for i in range(n))
-            output = Parallel(n_jobs=num_workers)(jobs)
-            x = np.array(output)
-        else:
-            x = np.array([prox_ops[i](Az, y[i], etas[i]) if tilted_mask[i] else prox_ops[i](z, y[i], etas[i]) for i in range(n)])
+        x = np.array([prox_ops[i](Az, y[i], etas[i]) if tilted_mask[i] else prox_ops[i](z, y[i], etas[i]) for i in range(n)])
 
         z_old = deepcopy(z)
 
