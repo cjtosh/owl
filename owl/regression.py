@@ -19,7 +19,7 @@ class LinearRegression(OWLModel):
         self.resid = self.y - self.predict(self.X)
         self.sigma = np.sqrt(np.sum(self.w*np.square(self.resid))/self.n)
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         return(stats.norm.logpdf(self.resid, 0, self.sigma))
 
     def predict(self, X:np.ndarray):
@@ -39,12 +39,12 @@ class LogisticRegression(OWLModel):
         self.scaler = StandardScaler()
         self.scaler.fit(X=X)
         self.X_scaled = self.scaler.transform(X=X)
-        self.clf = LogReg(penalty='none', max_iter=300)
+        self.clf = LogReg(penalty=None, max_iter=300)
 
     def maximize_weighted_likelihood(self, **kwargs):
         self.clf.fit(X=self.X_scaled, y=self.y, sample_weight=self.w)
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         prob_matrix = self.clf.predict_proba(self.X_scaled)
         probs = np.clip(prob_matrix[np.arange(self.n),self.y], a_min=10e-300, a_max=None) ## Stability
         ll = np.log(probs)

@@ -2,6 +2,7 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import argparse
 from owl.ball import L1Ball
 from sklearn.linear_model import RANSACRegressor, RidgeCV, HuberRegressor
@@ -20,7 +21,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     n_train, p = X_train.shape
     n_corrupt = int(epsilon*n_train)
     lr = LinearRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
 
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
@@ -39,7 +40,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption type": corr_type})
 
     if corr_type=='max':
-        lls = lr.log_likelihood_vector() ## Get likelihood values
+        lls = lr.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n_train, size=n_corrupt, replace=False)
@@ -132,7 +133,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--dataset', type=str, default='mnist', help="The dataset we're looking at.")
+    parser.add_argument('--dataset', type=str, default='qsar', help="The dataset we're looking at.")
     parser.add_argument('--corr_type', type=str, default='max', help="The type of corruption.")
 
     args = parser.parse_args()
@@ -176,7 +177,8 @@ if __name__ == "__main__":
         y_test = np.dot(X_test, w)
 
     full_results = []
-    for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
+    epsilons =  np.linspace(start=0.01, stop=0.25, num=10)
+    for epsilon in tqdm(epsilons):
         results = linreg_corruption_comparison(X_train, y_train, X_test, y_test, epsilon, corr_type)
         full_results.extend(results)
 

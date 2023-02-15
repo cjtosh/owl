@@ -5,6 +5,7 @@ from owl.mixture_models import BernoulliMM, fit_mle, fit_owl
 from owl.ball import L1Ball
 import os, sys
 import pickle
+from tqdm import tqdm
 
 ADMMSTEPS=1000
 
@@ -62,7 +63,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     mle = fit_mle(model=bmm)
 
     if corr_type=='max':
-        lls = mle.log_likelihood_vector() ## Get likelihood values
+        lls = mle.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
@@ -128,7 +129,7 @@ if __name__ == "__main__":
         
     full_results = []
 
-    for epsilon in epsilons:
+    for epsilon in tqdm(epsilons):
         results = simulation(X_=X, K=K, epsilon=epsilon, corr_type=corr_type, true_C=true_C, z_=z, lam_=lam)
         full_results.extend(results)
 

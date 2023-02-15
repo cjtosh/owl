@@ -44,7 +44,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     
     ## Corrupt the data
     if corr_type=='max':
-        lls = mle.log_likelihood_vector() ## Get likelihood values
+        lls = mle.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)

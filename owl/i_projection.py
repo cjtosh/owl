@@ -21,19 +21,19 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
     simplex_prox = ProxSimplex()
     if kde is None:
         kl_prox = ProxKLLogScale(log_q=log_q, tilt=False)
-        ball_prox = ball.get_prox_operator()
+        ball_prox = ball.get_prox_operator(tilt=False)
         svd = None
         A = None
         prox_ops = [simplex_prox, kl_prox, ball_prox]
     else:
         rowsums = kde.row_sums()
         U, S, Vt = kde.normalized_svd()
-        A = kde.normalized_kernel_mat()
+        A = kde.normalized_kernel_matrix()
         shifted_log_q = log_q - np.log(rowsums)
 
         ## KL term gets shifted + tilted by A
         kl_prox = ProxKLLogScale(log_q=shifted_log_q, tilt=True)
-        ball.get_prox_operator(tilt=True)
+        ball_prox = ball.get_prox_operator(tilt=True)
         svd = (U, S, Vt)
 
         prox_ops = [simplex_prox, kl_prox, ball_prox]

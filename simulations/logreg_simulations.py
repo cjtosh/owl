@@ -4,6 +4,7 @@ import numpy as np
 from scipy.special import expit
 from scipy.io import loadmat
 import argparse
+from tqdm import tqdm
 from owl.regression import LogisticRegression
 from sklearn.linear_model import LogisticRegressionCV, RANSACRegressor
 from sklearn.linear_model import LogisticRegression as LogReg
@@ -22,7 +23,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     n_train, p = X_train.shape
     n_corrupt = int(epsilon*n_train)
     lr = LogisticRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
     train_acc = np.mean(lr.predict(X_train) == y_train)
     test_acc = np.mean(lr.predict(X_test) == y_test)
     results.append({"Method": "Uncorrupted MLE", 
@@ -32,7 +33,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption type": corr_type})
 
     if corr_type=='max':
-        lls = lr.log_likelihood_vector() ## Get likelihood values
+        lls = lr.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n_train, size=n_corrupt, replace=False)
@@ -81,7 +82,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption type": corr_type})
 
     ## RANSAC regression
-    clf = RANSACRegressor(estimator=LogReg(penalty='none'), min_samples=(1-2*epsilon), max_trials=50)
+    clf = RANSACRegressor(estimator=LogReg(penalty=None), min_samples=(1-2*epsilon), max_trials=50)
     clf.fit(X=X_scale, y=y_train)
     train_acc = np.mean( clf.predict(X_scale) == y_train)
     test_acc = np.mean( clf.predict(X_test_scale) == y_test)
@@ -167,7 +168,8 @@ if __name__ == "__main__":
         y_test = (np.dot(X_test, w) > 0).astype(int)
 
     full_results = []
-    for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
+    epsilons =  np.linspace(start=0.01, stop=0.25, num=10)
+    for epsilon in tqdm(epsilons):
         results = logreg_corruption_comparison(X_train, y_train, X_test, y_test, epsilon, corr_type)
         full_results.extend(results)
 

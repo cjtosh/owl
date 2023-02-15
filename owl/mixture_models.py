@@ -163,8 +163,8 @@ class SphericalGMM(OWLMixtureModel):
     
     def E_step(self):
         square_dists = cdist(self.X, self.mu, metric='sqeuclidean')
-        
-        log_probs = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
+        with np.errstate(divide = 'ignore'):
+            log_probs = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True) )
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
         self.probs = self.probs * self.w[:,np.newaxis] ## Reweight the probabilities
@@ -213,14 +213,16 @@ class SphericalGMM(OWLMixtureModel):
                 variance = self.solo_var
                 self.tau[h] = self.p/variance
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         if self.hard:
-            log_prior_probs = np.log(self.pi[self.z])
+            with np.errstate(divide = 'ignore'):
+                log_prior_probs = np.log(self.pi[self.z])
             taus = self.tau[self.z]
             return(log_prior_probs + 0.5*self.p*np.log(taus) - 0.5*taus*np.sum(np.square(self.X - self.mu[self.z]), axis=1))
         else:
             square_dists = cdist(self.X, self.mu, metric='sqeuclidean') ## n x K
-            expanded_result = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
+            with np.errstate(divide = 'ignore'):
+                expanded_result = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
             return(logsumexp(expanded_result, axis=1))
 
     def mean_mse(self, mu:np.ndarray): 
@@ -311,7 +313,8 @@ class GeneralGMM(OWLMixtureModel):
         ## D[i,h] = (x_i - mu_h)^T Prec_h (x_i - mu_h) 
         D = np.transpose(np.stack([np.einsum('ij, ik, jk -> i' , (self.X - self.mu[h]), self.X - self.mu[h], self.prec_mats[h])  for h in range(self.K) ]))
         _, log_dets = np.linalg.slogdet(self.prec_mats)
-        log_probs = 0.5*log_dets - 0.5*D
+        with np.errstate(divide = 'ignore'):
+            log_probs = np.log(self.pi)+ 0.5*log_dets - 0.5*D
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True))
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
 
@@ -320,9 +323,10 @@ class GeneralGMM(OWLMixtureModel):
         ## Hard EM -- assignment
         self.z = np.argmax(log_probs, axis=1)
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         if self.hard:
-            log_prior_probs = np.log(self.pi[self.z])
+            with np.errstate(divide = 'ignore'):
+                log_prior_probs = np.log(self.pi[self.z])
 
             diff = self.X - self.mu[self.z]
             sq_mahal = np.einsum('ij, ik, ijk -> i' , diff, diff, self.prec_mats[self.z])
@@ -330,7 +334,8 @@ class GeneralGMM(OWLMixtureModel):
 
             return(log_prior_probs + 0.5*log_dets[self.z] - 0.5*sq_mahal)
         else:
-            log_prior_probs = np.log(self.pi)
+            with np.errstate(divide = 'ignore'):
+                log_prior_probs = np.log(self.pi)
             _, log_dets = np.linalg.slogdet(self.prec_mats)
             log_mat = np.zeros((self.n, self.K))
             for k in range(self.K):
@@ -413,7 +418,7 @@ class BernoulliMM(OWLMixtureModel):
         self.lam = np.dot( np.transpose(probs), self.X )/(np.sum(probs, axis=0))[:,np.newaxis]
         
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         if self.hard:
             with np.errstate(divide = 'ignore'):
                 log_prior_probs = np.log(self.pi[self.z])

@@ -4,6 +4,7 @@ import random
 import os
 import pickle
 import argparse
+from tqdm import tqdm
 from sklearn.decomposition import PCA
 from owl.mixture_models import GeneralGMM, fit_owl
 from owl.ball import L1Ball
@@ -41,13 +42,14 @@ if __name__ == "__main__":
 
     fname = os.path.join(folder, str(eps) + "_" + str(seed) + ".pkl")
     results = []
-    for k in np.arange(2, 15):
+    Ks = np.arange(2, 15)
+    for k in tqdm(Ks):
         gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True)
 
         l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
         gmm_tv = fit_owl(gmm_tv, l1_ball, repeats=5, admmsteps=2000, verbose=False)
         mask = (gmm_tv.w >= 1.0)
-        ll_vec = gmm_tv.log_likelihood_vector()
+        ll_vec = gmm_tv.log_likelihood()
         wll = np.dot(gmm_tv.w,ll_vec)
 
         probs = gmm_tv.w/np.sum(gmm_tv.w)

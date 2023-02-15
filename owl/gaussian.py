@@ -23,7 +23,7 @@ class Gaussian(OWLModel):
         self.mu = np.average(self.X, axis=0, weights=self.w)
         self.cov = np.cov(self.X, rowvar=False, ddof=0, aweights=self.w)
 
-    def log_likelihood_vector(self):
+    def log_likelihood(self):
         tol = 1e-10
         cov = deepcopy(self.cov)
         lam = None
