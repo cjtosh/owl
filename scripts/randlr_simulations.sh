@@ -5,5 +5,5 @@ conda activate owl
 
 seed=$(($LSB_JOBINDEX + 100))
 
-python src/logreg_simulations.py --seed $seed --dataset 'random' --corr_type 'max'
-python src/logreg_simulations.py --seed $seed --dataset 'random' --corr_type 'rand'
+python simulations/logreg_simulations.py --seed $seed --dataset 'random' --corr_type 'max'
+python simulations/logreg_simulations.py --seed $seed --dataset 'random' --corr_type 'rand'

@@ -5,5 +5,5 @@ conda activate owl
 
 seed=$(($LSB_JOBINDEX + 100))
 
-python src/linreg_simulations.py --seed $seed --dataset 'qsar' --corr_type 'max'
-python src/linreg_simulations.py --seed $seed --dataset 'qsar' --corr_type 'rand'
+python simulations/linreg_simulations.py --seed $seed --dataset 'qsar' --corr_type 'max'
+python simulations/linreg_simulations.py --seed $seed --dataset 'qsar' --corr_type 'rand'
