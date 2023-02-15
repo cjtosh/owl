@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source /home/toshc/anaconda3/bin/activate
-conda activate py39
+conda activate owl
 
 seed=$(($LSB_JOBINDEX + 100))
 
