@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.linalg import norm, multi_dot
-from ball import ProbabilityBall
-from kde import KDE
-from proximal import ProximalOperator, ProxSimplex, ProxKLLogScale
+from owl.ball import ProbabilityBall
+from owl.kde import KDE
+from owl.proximal import ProximalOperator, ProxSimplex, ProxKLLogScale
 from copy import deepcopy
 
 

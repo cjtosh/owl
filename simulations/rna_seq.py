@@ -5,9 +5,8 @@ import os
 import pickle
 import argparse
 from sklearn.decomposition import PCA
-from general_gmm import GeneralGMM
-from balls_kdes import ProbabilityBall
-from cmodels import fit_owl
+from owl.mixture_models import GeneralGMM, fit_owl
+from owl.ball import L1Ball
 from sklearn.metrics import adjusted_rand_score
 from scipy.special import xlogy
 
@@ -45,7 +44,7 @@ if __name__ == "__main__":
     for k in np.arange(2, 15):
         gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True)
 
-        l1_ball = ProbabilityBall(dist_type='l1', n=X_pca.shape[0], r=eps)
+        l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
         gmm_tv = fit_owl(gmm_tv, l1_ball, repeats=5, admmsteps=2000, verbose=False)
         mask = (gmm_tv.w >= 1.0)
         ll_vec = gmm_tv.log_likelihood_vector()

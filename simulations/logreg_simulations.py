@@ -4,12 +4,12 @@ import numpy as np
 from scipy.special import expit
 from scipy.io import loadmat
 import argparse
-from regression import LogisticRegression
+from owl.regression import LogisticRegression
 from sklearn.linear_model import LogisticRegressionCV, RANSACRegressor
 from sklearn.linear_model import LogisticRegression as LogReg
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from balls_kdes import ProbabilityBall
+from owl.ball import L1Ball
 
 
 def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_test_:np.ndarray, y_test_:np.ndarray, epsilon, corr_type):
@@ -40,7 +40,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
 
     ## MLE
     lr = LogisticRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
     train_acc = np.mean(lr.predict(X_train) == y_train)
     test_acc = np.mean(lr.predict(X_test) == y_test)
     results.append({"Method": "MLE", 
@@ -51,8 +51,8 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     
     ## Robust logistic regression   
     rob_lr = LogisticRegression(X=X_train, y=y_train)
-    l1_ball = ProbabilityBall(n=n_train, dist_type='l1', r=2*epsilon)
-    rob_lr.am_robust(ball=l1_ball, n_iters=10)
+    l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    rob_lr.fit_owl(ball=l1_ball, n_iters=10)
     
     train_acc = np.mean( rob_lr.predict(X_train) == y_train)
     test_acc = np.mean( rob_lr.predict(X_test) == y_test)

@@ -1,9 +1,8 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from bmm import BernoulliMM
-from balls_kdes import ProbabilityBall
-from cmodels import fit_mle, fit_owl
+from owl.mixture_models import BernoulliMM, fit_mle, fit_owl
+from owl.ball import L1Ball
 import os, sys
 import pickle
 
@@ -74,51 +73,33 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     for i in inds_corrupt:
         X[i] = corrupt(X[i])
     
-    corrupt_mask = np.isin(np.arange(n), inds_corrupt)
-    uncorrupt_mask = ~corrupt_mask
-
     ## Evaluate uncorrupted MLE
-    cooccur_dist = mle.cooccurrence_distance(true_C)
     l1_dist = mle.mean_mae(lam)
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
 
-    print("Uncorrupted MLE l1 dist:", l1_dist, file=sys.stderr)
-    print("Uncorrupted MLE Coccurrence dist:", cooccur_dist, file=sys.stderr)
-    
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type})
 
     ## Regular MLE
     bmm = BernoulliMM(X=X, K=K, hard=False)
     mle = fit_mle(model=bmm)
-    cooccur_dist = mle.cooccurrence_distance(true_C)
     l1_dist = mle.mean_mae(lam)
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
 
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type})
 
     ## TV OWL
     bmm = BernoulliMM(X=X, K=K, hard=True)
-    tv_ball = ProbabilityBall(dist_type='l1', n=n, r=epsilon)
+    tv_ball = L1Ball(n=n, r=epsilon)
     owl_tv = fit_owl(bmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
-    cooccur_dist = owl_tv.cooccurrence_distance(true_C)
     l1_dist = owl_tv.mean_mae(lam)
-    ari = owl_tv.adjusted_rand_index(z, uncorrupt_mask)
 
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type})
 
     return(results)

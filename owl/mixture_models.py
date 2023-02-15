@@ -1,17 +1,19 @@
 import abc
 import numpy as np
-from models import OWLModel
+from owl.models import OWLModel
+from owl.ball import ProbabilityBall
+from owl.kde import KDE
+from owl.kde import knn_bandwidth
 from scipy.spatial.distance import cdist, pdist
 from copy import deepcopy
 from sklearn.cluster import AgglomerativeClustering
-from kde import knn_bandwidth
 from scipy.special import xlogy, logsumexp
 from scipy.optimize import linear_sum_assignment
 
 '''
     Generic models that can be fit using hard or soft EM. Typically, mixture models.
 '''
-class MixtureModel(OWLModel):
+class OWLMixtureModel(OWLModel):
     def __init__(self,
                  n:int, ## Number of input points
                  w:np.ndarray=None, ## Weights on the points
@@ -21,6 +23,10 @@ class MixtureModel(OWLModel):
         super().__init__(n=n,w=w, **kwargs)
         self.hard = hard
         self.em_steps = em_steps
+
+    @abc.abstractmethod
+    def reinitialize(self, reset_w:bool, **kwargs) -> None:
+        raise NotImplementedError
 
     @abc.abstractmethod
     def E_step(self, **kwargs):
@@ -43,10 +49,74 @@ class MixtureModel(OWLModel):
             else:
                 self.soft_M_step()
 
+
+
+'''
+    Fits a maximum likelihood model using EM with random restarts.
+'''
+def fit_mle(model:OWLMixtureModel, repeats:int=25):
+    best_model = deepcopy(model)
+    curr_model = deepcopy(model)
+    best_ll = -np.infty
+    for _ in range(repeats):
+        curr_model.maximize_weighted_likelihood()
+        ll = np.sum(curr_model.log_likelihood())
+        if ll > best_ll:
+            best_ll = ll
+            best_model = deepcopy(curr_model)
+
+        ## Reinitialize current model
+        curr_model.reinitialize(reset_w=True)
+    return(best_model)
+
+'''
+    Fits an OWL model using alternating optimization with random restarts.
+'''
+
+def fit_owl(model:OWLMixtureModel, ball:ProbabilityBall, repeats=10, admmsteps=1000, verbose:bool=True):
+    best_model = deepcopy(model)
+    curr_model = deepcopy(model)
+    best_ll = -np.infty
+    for _ in range(repeats):
+        curr_model.fit_owl(ball=ball, n_iters=15, kde=None, admmsteps=admmsteps, verbose=verbose)
+        prob = curr_model.w/np.sum(curr_model.w)
+        ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+        if ll > best_ll:
+            best_ll = ll
+            best_model = deepcopy(curr_model)
+
+        ## Reinitialize current model
+        curr_model.reinitialize(reset_w=True)
+    return(best_model)
+
+
+'''
+    Fits a kernelized OWL model using alternating optimization with random restarts 
+    + bandwidth search for the kernel bandwidth.
+'''
+
+def fit_kernelized_owl(model:OWLMixtureModel, ball:ProbabilityBall, kde:KDE, bandwidth_schedule:list, repeats=10, admmsteps=1000, verbose:bool=True):
+    best_model = deepcopy(model)
+    curr_model = deepcopy(model)
+    best_ll = -np.infty
+    for bandwidth in bandwidth_schedule:
+        kde.recalculate_kernel(bandwidth=bandwidth)
+        for _ in range(repeats):
+                curr_model.fit_owl(ball=ball, n_iters=15, kde=kde, admmsteps=admmsteps, verbose=verbose)
+                prob = curr_model.w/np.sum(curr_model.w)
+                ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+                if ll > best_ll:
+                    best_ll = ll
+                    best_model = deepcopy(curr_model)
+
+                ## Reinitialize current model
+                curr_model.reinitialize(reset_w=True)
+    return(best_model)
+
 '''
     Mixture of spherical Gaussians.
 '''
-class SphericalGMM(MixtureModel):
+class SphericalGMM(OWLMixtureModel):
     def __init__(self, 
                 X: np.ndarray, ## Input samples [n samples x p features]
                 K:int, ## Number of components
@@ -161,7 +231,7 @@ class SphericalGMM(MixtureModel):
 
 
 
-class GeneralGMM(MixtureModel):
+class GeneralGMM(OWLMixtureModel):
     def __init__(self, 
         X: np.ndarray, ## Input samples [n samples x p features]
         K:int, ## Number of components
@@ -274,7 +344,7 @@ class GeneralGMM(MixtureModel):
 
     Data points are stored in the rows of X.
 '''
-class BernoulliMM(MixtureModel):
+class BernoulliMM(OWLMixtureModel):
     def __init__(self, 
         X: np.ndarray, ## Input samples [2d array]
         K:int, ## Number of components

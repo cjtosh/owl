@@ -4,8 +4,9 @@ import numpy as np
 import argparse
 import scipy.stats as stats
 from scipy.special import xlogy
-from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
-from gaussian import Gaussian
+from owl.ball import L1Ball
+from owl.kde import KDE, knn_bandwidth
+from owl.gaussian import Gaussian
 from tqdm import tqdm
 
 
@@ -21,12 +22,10 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     n_corrupt = int(epsilon*n)
 
     g.EM_step()
-    hell_dist = g.hellinger(mu, cov)
     mu_dist = np.mean(np.square(mu - g.mu ))
 
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
 
@@ -43,24 +42,20 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     ## MLE
     g = Gaussian(X=X)
     g.EM_step()
-    hell_dist = g.hellinger(mu, cov)
     mu_dist = np.mean(np.square(mu - g.mu ))
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
 
     ## OWL - TV
     g = Gaussian(X=X)
-    l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
-    g.am_robust(ball=l1_ball, n_iters=10)
-    hell_dist = g.hellinger(mu, cov)
+    tv_ball = L1Ball(n=n, r=2*epsilon)
+    g.am_robust(ball=tv_ball, n_iters=10)
     mu_dist = np.mean(np.square(mu - g.mu ))
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
@@ -71,29 +66,25 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     mu_dist_sel = None
     for k in [5, 10, 25, 50]:
         g = Gaussian(X=X)
-        l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
+        tv_ball = L1Ball(n=n, r=2*epsilon)
         bandwidth = knn_bandwidth(X, k)
         kde = KDE(X, bandwidth)
-        g.am_robust(ball=l1_ball, n_iters=10, kde=kde)
+        g.am_robust(ball=tv_ball, n_iters=10, kde=kde)
         prob = g.w/np.sum(g.w)
         ll = np.dot(prob, g.log_likelihood_vector()) - np.nansum(xlogy(prob , prob))
-        hell_dist = g.hellinger(mu, cov)
         mu_dist = np.mean(np.square(mu - g.mu ))
 
         
         results.append({"Method": "OWL (Kernelized, k=" + str(k) + ")", 
                         "Corruption fraction": epsilon, 
-                        "Hellinger distance": hell_dist,
                         "Mean MSE": mu_dist,
                         "Corruption type": corr_type})
         if ll > best_ll:
             best_ll = ll
-            hell_dist_sel = hell_dist
             mu_dist_sel = mu_dist
 
     results.append({"Method": "OWL (Kernelized, adaptive)", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist_sel,
                     "Mean MSE": mu_dist_sel,
                     "Corruption type": corr_type})
 

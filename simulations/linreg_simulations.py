@@ -2,20 +2,12 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-from scipy.io import loadmat
 import argparse
-from balls_kdes import ProbabilityBall
-from sklearn.linear_model import RANSACRegressor, RidgeCV, TheilSenRegressor, HuberRegressor
+from owl.ball import L1Ball
+from sklearn.linear_model import RANSACRegressor, RidgeCV, HuberRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from regression import LinearRegression
-
-
-def HuberRegression(X, y):
-    epsilon = 1.345
-    clf = HuberRegressor(epsilon=epsilon)
-    clf.fit(X=X, y=y)
-    return(clf)
+from owl.regression import LinearRegression
 
 
 def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_test_:np.ndarray, y_test_:np.ndarray, epsilon, corr_type):
@@ -59,7 +51,7 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
 
     ## MLE
     lr = LinearRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
     train_mse = np.mean( np.square(lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(lr.predict(X_test) - y_test))
     r2 = lr.r2_score(X_test, y_test)
@@ -73,8 +65,8 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     
     ## Robust logistic regression   
     rob_lr = LinearRegression(X=X_train, y=y_train)
-    l1_ball = ProbabilityBall(n=n_train, dist_type='l1', r=2*epsilon)
-    rob_lr.am_robust(ball=l1_ball, n_iters=10)
+    l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    rob_lr.fit_owl(ball=l1_ball, n_iters=10)
     
     train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(rob_lr.predict(X_test) - y_test))
@@ -120,21 +112,10 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Test R^2": r2,
                     "Corruption type": corr_type})
 
-    ## Theil-Sen
-    # nsub = int((1-2*epsilon)*len(y_train))
-    # clf = TheilSenRegressor(n_subsamples=nsub)
-    # clf.fit(X=X_scale, y=y_train)
-    # train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
-    # test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
-    # results.append({"Method": "Theil-Sen Regression", 
-    #                 "Corruption fraction": epsilon, 
-    #                 "Test MSE": test_mse,
-    #                 "Train MSE": train_mse,
-    #                 "Corruption type": corr_type})
+    ## Huber regression
+    clf = HuberRegressor(epsilon=1.345)
+    clf.fit(X=X_scale, y=y_train)
 
-    # clf = HuberRegressor()
-    # clf.fit(X=X_scale, y=y_train)
-    clf = HuberRegression(X_scale, y_train)
     train_mse = np.mean( np.square(clf.predict(X_scale) - y_train))
     test_mse = np.mean( np.square(clf.predict(X_test_scale) - y_test))
     r2 = clf.score(X_test_scale,y_test)
@@ -163,20 +144,12 @@ if __name__ == "__main__":
     os.makedirs(folder, exist_ok=True)
 
     if args.dataset=='qsar':
-        # qsar = loadmat("data/qsar.mat")
-        # X_train = qsar['X_train']
-        # X_test = qsar['X_test']
-        # y_train = np.squeeze(qsar['y_train'])
-        # y_test = np.squeeze(qsar['y_test'])
-        # X = np.vstack((X_train, X_test))
-        # y = np.concatenate((y_train, y_test))
-
         df = pd.read_csv("data/qsar.csv")
         y = df['pXC50'].values
         df.drop(columns=['target_id', 'molecule_id', 'pXC50', 'dataset_id'], inplace=True)
         X = df.values
 
-        ## Make our own train-test split
+        ## Make train-test split
         test_frac = 0.2
         N = len(y)
         n_test = int(test_frac * N)

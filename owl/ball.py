@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from numpy.linalg import norm, multi_dot
-from proximal import ProxL1Ball, ProxL2Ball, ProxMMDBall, proj_l1_ball, proj_l2_ball, proj_ellipsoid
+from owl.proximal import ProxL1Ball, ProxL2Ball, ProxMMDBall, proj_l1_ball, proj_l2_ball, proj_ellipsoid
 from typing import Optional
 
 
