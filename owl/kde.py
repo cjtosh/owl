@@ -111,10 +111,12 @@ class KDE():
 
 class RBFKDE(KDE):
     def __init__(self, 
-                X: np.ndarray,
-                bandwidth: float):
+                 X: np.ndarray,
+                 bandwidth:float=None,
+                 neighbors:int=None,
+                 **kwargs): 
     
-        super().__init__(X=X, bandwidth=bandwidth)
+        super().__init__(X=X, bandwidth=bandwidth, neighbors=neighbors, **kwargs)
     
     def calculate_mmd_matrix(self, **kwargs):
         dmat = np.square(self.distance_matrix)/self.bandwidth
@@ -128,10 +130,12 @@ class RBFKDE(KDE):
     
 class HatKDE(KDE):
     def __init__(self, 
-                X: np.ndarray,
-                bandwidth: float):
+                 X: np.ndarray,
+                 bandwidth:float=None,
+                 neighbors:int=None,
+                 **kwargs): 
     
-        super().__init__(X=X, bandwidth=bandwidth)
+        super().__init__(X=X, bandwidth=bandwidth, neighbors=neighbors, **kwargs)
     
     def calculate_kernel_matrix(self, **kwargs):
         indicator = (self.distance_matrix <= self.bandwidth).astype(float)
@@ -141,6 +145,7 @@ class HatKDE(KDE):
         self.kernel_mat = indicator/vol_
 
     def calculate_mmd_matrix(self, **kwargs):
+        vol_ = np.power(np.pi, 0.5*self.dim)*np.power(self.bandwidth, self.dim)/gamma(0.5*self.dim + 1.) 
         indicator = (self.distance_matrix <= self.bandwidth).astype(float)
         reg_inc_beta_args = indicator*(1.0 - 0.25*np.square(self.distance_matrix/self.bandwidth))
         self.mmd_mat = betainc( 0.5*(self.dim + 1.), 0.5, reg_inc_beta_args)/vol_

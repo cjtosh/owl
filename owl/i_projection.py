@@ -24,7 +24,6 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
         ball_prox = ball.get_prox_operator(tilt=False)
         svd = None
         A = None
-        prox_ops = [simplex_prox, kl_prox, ball_prox]
     else:
         rowsums = kde.row_sums()
         U, S, Vt = kde.normalized_svd()
@@ -36,7 +35,7 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
         ball_prox = ball.get_prox_operator(tilt=True)
         svd = (U, S, Vt)
 
-        prox_ops = [simplex_prox, kl_prox, ball_prox]
+    prox_ops = [simplex_prox, kl_prox, ball_prox]
     
     w = consensus_admm(prox_ops=prox_ops, 
                        dim=len(log_q),

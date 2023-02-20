@@ -167,7 +167,6 @@ class SphericalGMM(OWLMixtureModel):
             log_probs = np.log(self.pi) + 0.5*self.p*np.log(self.tau) - 0.5*self.tau*square_dists
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True) )
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
-        self.probs = self.probs * self.w[:,np.newaxis] ## Reweight the probabilities
 
         self.z = np.argmax(log_probs, axis=1)
 
@@ -317,8 +316,6 @@ class GeneralGMM(OWLMixtureModel):
             log_probs = np.log(self.pi)+ 0.5*log_dets - 0.5*D
         probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True))
         self.probs = probs/np.sum(probs, axis=1, keepdims=True)
-
-        self.probs = self.probs * self.w[:,np.newaxis] ## Reweight the probabilities
 
         ## Hard EM -- assignment
         self.z = np.argmax(log_probs, axis=1)

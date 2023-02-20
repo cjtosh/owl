@@ -22,44 +22,24 @@ class ProbabilityBall():
             self.center = np.ones(n)/float(n)
         else:
             self.center = center
-        
+    
+    def set_radius(self,r:float):
+        self.r = r
             
     def projection(self, x:np.ndarray):
-        if self.dist_type == 'l2':
-            return(proj_l2_ball(x=x, c=self.center, r=self.r))
-        elif self.dist_type == 'l1':
-            return(proj_l1_ball(x=x, c=self.center, r=self.r))
-        else:
-            return(proj_ellipsoid(c=x, mu=self.center, Q=self.Q, L=self.eigL, T=100, r=self.r))
+        raise NotImplementedError
 
     
     ## A: Tilting matrix (Will project Aw instead of w)
     def get_prox_operator(self, tilt:bool=False):
-        if self.dist_type == 'l2':
-            return(ProxL2Ball(c=self.center, r=self.r, tilt=tilt))
-        elif self.dist_type == 'l1':
-            return(ProxL1Ball(c=self.center, r=self.r, tilt=tilt))
-        else:
-            return(ProxMMDBall(center=self.center, eigL=self.eigL, Q=self.Q, r=self.r, tilt=tilt))
+        raise NotImplementedError
 
 
     def check_projection(self, x:np.ndarray, tol:float):
-        diff =  x - self.center
-        if self.dist_type == 'l2':
-            return( norm(diff) < (self.r + tol) )
-        elif self.dist_type == 'l1':
-            return( norm(diff, ord=1 ) < (self.r + tol) )
-        else:
-            return( multi_dot([ diff.T, self.Q, np.diag(self.eigL), self.Q.T, diff]) < (self.r + tol) )
+        raise NotImplementedError
 
     def projection_value(self, x:np.ndarray):
-        diff =  x - self.center
-        if self.dist_type == 'l2':
-            return( norm(diff) )
-        elif self.dist_type == 'l1':
-            return( norm(diff, ord=1) )
-        else:
-            return( multi_dot([ diff.T, self.Q, np.diag(self.eigL), self.Q.T, diff]) )
+        raise NotImplementedError
 
 
 class MMDBall(ProbabilityBall):

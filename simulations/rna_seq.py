@@ -37,7 +37,7 @@ if __name__ == "__main__":
     pca = PCA(n_components=10)
     X_pca = pca.fit_transform(X_proc)
 
-    folder = "results/rna_seq_soft"
+    folder = "results/rna_seq"
     os.makedirs(folder, exist_ok=True)
 
     fname = os.path.join(folder, str(eps) + "_" + str(seed) + ".pkl")
