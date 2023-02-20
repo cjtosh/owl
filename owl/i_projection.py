@@ -16,6 +16,7 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
                     max_iter:int=1000,      ## Maximum number of admm steps to take
                     eta:float=0.01,         ## Initial admm penalty parameter
                     adjust_eta:bool=True,   ## Do we adjust eta on the fly?
+                    thresh:float=0.2,       ## Value at which variables are thresholded down to 0.
                     tol:float=10e-5):       ## Relative tolerance to stop at
 
     simplex_prox = ProxSimplex()
@@ -51,7 +52,7 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
         w = np.dot(A, w)
     
     ## Threshold the very low values
-    low_mask = w < 0.2/len(w)
+    low_mask = w < (thresh/len(w))
     w[low_mask] = 0.0
     return(w)
 
