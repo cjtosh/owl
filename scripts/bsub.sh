@@ -1,7 +1,3 @@
-#!/bin/bash
-
-# rm output_logs/*
-
 
 ## Logistic
 bsub -J 'rand[1-50]' -W 1:00 -n 1 -R "rusage[mem=5]" -e output_logs/rand_%I.err -o output_logs/rand_%I.out sh scripts/randlr_simulations.sh
