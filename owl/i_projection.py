@@ -46,8 +46,7 @@ def kl_minimization(log_q:np.ndarray,       ## log of q probabilities
                        A=A,
                        svd=svd,
                        adjust_eta=adjust_eta,
-                       tol=tol,
-                       num_workers=1)
+                       tol=tol)
     if A is not None:
         w = np.dot(A, w)
     
@@ -68,7 +67,7 @@ def consensus_admm(prox_ops:list[ProximalOperator],
                    svd:tuple[np.ndarray,np.ndarray,np.ndarray]=None,
                    adjust_eta:bool=True,
                    tol:float=10e-5, 
-                   num_workers:int=1):
+                   **kwargs):
 
     ## Number of primal variables we need to keep around
     n = len(prox_ops)
