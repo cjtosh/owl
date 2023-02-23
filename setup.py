@@ -9,7 +9,7 @@ setup(
     url='https://github.com/cjtosh/owl',
     license="GNU GPLv3",
     packages=['owl'],
-    install_requires=['numpy', 'scipy', 'sklearn', 'tqdm'],
+    install_requires=['numpy', 'scipy', 'sklearn', 'tqdm', 'kneed', 'pandas'],
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python'
