@@ -54,7 +54,7 @@ class OWLModel(object):
     ## Alternating optimization procedure.
     def fit_owl(self, 
                 ball:ProbabilityBall, 
-                n_iters:int,
+                n_iters:int=10,
                 kde:KDE = None, 
                 admmsteps:int=1000, 
                 admmtol:float=10e-5, 
