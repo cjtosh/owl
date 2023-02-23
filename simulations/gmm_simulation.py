@@ -1,7 +1,8 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from owl.mixture_models import SphericalGMM, fit_mle, fit_owl
+from owl.models import fit_owl
+from owl.mixture_models import SphericalGMM
 from owl.ball import L1Ball
 from tqdm import tqdm
 import os
@@ -34,11 +35,10 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     results = []
     n_corrupt = int(epsilon*n)
     
-    gmm = SphericalGMM(X, K=K, hard=False)
-
     ## Fit a MLE
-    mle = fit_mle(gmm)
-
+    mle = SphericalGMM(X, K=K, hard=False)
+    mle.fit_mle()
+    
     ## Uncorrupted distances
     mean_dist = mle.mean_mse(mu)
     
@@ -52,10 +52,6 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     for i in inds_corrupt:
         idxs = np.random.choice(p, size=int(0.5*p), replace=False)
         X[i][idxs] = corr_scale*np.random.choice([-1., 1.], size=len(idxs), replace=True)
-    
-    
-    corrupt_mask = np.isin(np.arange(n), inds_corrupt)
-    uncorrupt_mask = ~corrupt_mask
 
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
@@ -64,9 +60,8 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
                     "Corruption scale": corr_scale})
 
     ## MLE on corrupted data
-    gmm = SphericalGMM(X, K=K, hard=False)
-
-    mle = fit_mle(gmm)
+    mle = SphericalGMM(X, K=K, hard=False)
+    mle.fit_mle()
     mean_dist = mle.mean_mse(mu)
 
     results.append({"Method": "MLE", 
@@ -77,9 +72,13 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
 
     ## OWL with TV dist
     gmm = SphericalGMM(X, K=K, hard=True)
-    tv_ball = L1Ball(n=n, r=epsilon)
-    owl_tv = fit_owl(gmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
-
+    l1_ball = L1Ball(n=n, r=1.0)
+    owl_tv = fit_owl(gmm, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     admmsteps=ADMMSTEPS,
+                     n_workers=4)
+                     
     mean_dist = owl_tv.mean_mse(mu)
 
     results.append({"Method": "OWL (TV)", 

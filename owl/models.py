@@ -4,6 +4,15 @@ from owl.ball import ProbabilityBall
 from owl.kde import KDE
 from owl.i_projection import kl_minimization
 from tqdm import trange
+from copy import deepcopy
+from joblib import Parallel, delayed
+from kneed import KneeLocator
+from scipy.signal import savgol_filter
+from scipy.special import xlogy
+
+## Parallel run
+def prun(jobs: list, nprocs: int):
+    return Parallel(n_jobs=nprocs)(jobs)
 
 '''
     General class of models that can be used with OWL methodology. 
@@ -16,10 +25,14 @@ class OWLModel(object):
                  w:np.ndarray=None, ## Weights on the points
                  **kwargs):
         self.n = n
-        self.w = w
+        
         if w is None:
             self.w = np.ones(self.n)
-
+            self.w_init = np.ones(self.n)
+        else:
+            self.w = w.copy()
+            self.w_init = w.copy()
+        
     @abc.abstractmethod
     def log_likelihood(self, **kwargs) -> np.ndarray:
         raise NotImplementedError
@@ -28,12 +41,15 @@ class OWLModel(object):
     def maximize_weighted_likelihood(self, **kwargs):
         raise NotImplementedError
 
+    def reset_w(self):
+        self.w = self.w_init.copy()
+
     def set_w(self, w:np.ndarray, **kwargs):
         ## w must be length n and non-negative
         non_neg = np.all(w >= 0)
         assert len(w) == self.n, "Attempted to set w with incorrect length vector."
         assert non_neg, "Attempted to set w with negative entries."
-        self.w = w
+        self.w = w.copy()
 
     ## Alternating optimization procedure.
     def fit_owl(self, 
@@ -62,3 +78,57 @@ class OWLModel(object):
 
             ## Set w
             self.set_w(w)
+
+
+## Helper function 
+def p_owl_fit(model:OWLModel, 
+              ball:ProbabilityBall, 
+              kde:KDE=None, 
+              admmsteps:int=1000, 
+              admmtol:float=10e-5):
+    model.fit_owl(ball=ball, kde=kde, admmsteps=admmsteps, admmtol=admmtol)
+    prob = model.w/np.sum(model.w)
+    val = np.dot(prob, model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+    return(model, -val)
+
+
+def fit_owl(model:OWLModel, 
+            ball:ProbabilityBall, 
+            epsilons:np.ndarray=None, 
+            kde:KDE=None, 
+            admmsteps:int=1000, 
+            admmtol:float=10e-5, 
+            n_workers:int=1,
+            return_all:bool=False):
+
+    ## Just one radius
+    if epsilons is None:
+        epsilons = [ball.r]
+
+    balls = []
+    models = []
+    for eps in epsilons:
+        b = deepcopy(ball)
+        b.set_radius(eps)
+        balls.append(b)
+        m = deepcopy(model)
+        models.append(m)
+
+    pfit = delayed(p_owl_fit)
+    jobs = (pfit(model=m, ball=b, kde=kde, admmsteps=admmsteps, admmtol=admmtol) for m, b in zip(models, balls))
+    result = prun(jobs, n_workers)
+
+    models = []
+    values = []
+    for m, val in result:
+        models.append(m)
+        values.append(val)
+
+    if return_all:
+        return(models, values)
+    else:
+        kneedle = KneeLocator(epsilons, savgol_filter(values, 2, 1), curve="convex", direction="decreasing")
+        idx = np.where(epsilons==kneedle.elbow)[0][0]
+        return(models[idx])
+
+

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import argparse
+from owl.models import fit_owl
 from owl.ball import L1Ball
 from sklearn.linear_model import RANSACRegressor, RidgeCV, HuberRegressor
 from sklearn.preprocessing import StandardScaler
@@ -66,8 +67,13 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     
     ## Robust logistic regression   
     rob_lr = LinearRegression(X=X_train, y=y_train)
-    l1_ball = L1Ball(n=n_train, r=2*epsilon)
-    rob_lr.fit_owl(ball=l1_ball, n_iters=10)
+    # l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    l1_ball = L1Ball(n=n_train, r=1.0)
+    # rob_lr.fit_owl(ball=l1_ball, n_iters=10)
+    rob_lr = fit_owl(rob_lr, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     n_workers=4)
     
     train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
     test_mse = np.mean( np.square(rob_lr.predict(X_test) - y_test))

@@ -28,7 +28,6 @@ class ProbabilityBall():
             
     def projection(self, x:np.ndarray):
         raise NotImplementedError
-
     
     ## A: Tilting matrix (Will project Aw instead of w)
     def get_prox_operator(self, tilt:bool=False):

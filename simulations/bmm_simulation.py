@@ -1,7 +1,8 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from owl.mixture_models import BernoulliMM, fit_mle, fit_owl
+from owl.models import fit_owl
+from owl.mixture_models import BernoulliMM
 from owl.ball import L1Ball
 import os, sys
 import pickle
@@ -34,7 +35,6 @@ def obs_coocur(X, w=None):
 
 def simulated_bmm_data(n, K, p, alpha=0.1, beta=0.1):
     lam = np.random.beta(a=alpha, b=beta, size=(K, p))
-#     pi = np.random.dirichlet(np.ones(K))
     pi = np.ones(K)/K
     z = np.random.choice(K, size=n, replace=True, p=pi)
     X = np.empty((n,p), dtype=int)
@@ -59,8 +59,8 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     results = []
     n_corrupt = int(epsilon*n)
     
-    bmm = BernoulliMM(X=X, K=K, hard=False)
-    mle = fit_mle(model=bmm)
+    mle = BernoulliMM(X=X, K=K, hard=False)
+    mle.fit_mle()
 
     if corr_type=='max':
         lls = mle.log_likelihood() ## Get likelihood values
@@ -83,8 +83,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Corruption type": corr_type})
 
     ## Regular MLE
-    bmm = BernoulliMM(X=X, K=K, hard=False)
-    mle = fit_mle(model=bmm)
+    mle = BernoulliMM(X=X, K=K, hard=False)
     l1_dist = mle.mean_mae(lam)
 
     results.append({"Method": "MLE", 
@@ -94,8 +93,12 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
 
     ## TV OWL
     bmm = BernoulliMM(X=X, K=K, hard=True)
-    tv_ball = L1Ball(n=n, r=epsilon)
-    owl_tv = fit_owl(bmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
+    l1_ball = L1Ball(n=n, r=1.0)
+    owl_tv = fit_owl(bmm, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     admmsteps=ADMMSTEPS,
+                     n_workers=4)
     l1_dist = owl_tv.mean_mae(lam)
 
     results.append({"Method": "OWL (TV)", 

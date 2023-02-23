@@ -19,10 +19,12 @@ class OWLMixtureModel(OWLModel):
                  w:np.ndarray=None, ## Weights on the points
                  hard:bool=True, ## Whether or not maximization is done via hard or soft EM
                  em_steps:int=20, ## How many EM steps to do for weighted likelihood maximization
+                 repeats:int=10, ## How many random repeats will we perform when fitting MLE or OWL?
                  **kwargs):
         super().__init__(n=n,w=w, **kwargs)
         self.hard = hard
         self.em_steps = em_steps
+        self.repeats = repeats
 
     @abc.abstractmethod
     def reinitialize(self, reset_w:bool, **kwargs) -> None:
@@ -50,68 +52,118 @@ class OWLMixtureModel(OWLModel):
                 self.soft_M_step()
 
 
+    def owl_step(self, ball: ProbabilityBall, n_iters:int, kde: KDE, admmsteps:int, admmtol:float, verbose:bool):
+        super().fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, verbose=verbose)
 
-'''
-    Fits a maximum likelihood model using EM with random restarts.
-'''
-def fit_mle(model:OWLMixtureModel, repeats:int=25):
-    best_model = deepcopy(model)
-    curr_model = deepcopy(model)
-    best_ll = -np.infty
-    for _ in range(repeats):
-        curr_model.maximize_weighted_likelihood()
-        ll = np.sum(curr_model.log_likelihood())
-        if ll > best_ll:
-            best_ll = ll
-            best_model = deepcopy(curr_model)
+    def fit_owl(self, 
+                ball: ProbabilityBall, 
+                n_iters: int=15, 
+                kde: KDE = None, 
+                bandwidth_schedule:list = None,
+                admmsteps: int = 1000, 
+                admmtol: float = 0.0001, 
+                verbose: bool = False, 
+                **kwargs):
+        
+        best_dict = deepcopy(self.__dict__)
+        best_ll = -np.infty
+        if (bandwidth_schedule is None) and (kde is not None):
+            bandwidth_schedule = [kde.bandwidth]
+        elif bandwidth_schedule is None:
+            bandwidth_schedule = [0]
 
-        ## Reinitialize current model
-        curr_model.reinitialize(reset_w=True)
-    return(best_model)
-
-'''
-    Fits an OWL model using alternating optimization with random restarts.
-'''
-
-def fit_owl(model:OWLMixtureModel, ball:ProbabilityBall, repeats=10, admmsteps=1000, verbose:bool=True):
-    best_model = deepcopy(model)
-    curr_model = deepcopy(model)
-    best_ll = -np.infty
-    for _ in range(repeats):
-        curr_model.fit_owl(ball=ball, n_iters=15, kde=None, admmsteps=admmsteps, verbose=verbose)
-        prob = curr_model.w/np.sum(curr_model.w)
-        ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
-        if ll > best_ll:
-            best_ll = ll
-            best_model = deepcopy(curr_model)
-
-        ## Reinitialize current model
-        curr_model.reinitialize(reset_w=True)
-    return(best_model)
-
-
-'''
-    Fits a kernelized OWL model using alternating optimization with random restarts 
-    + bandwidth search for the kernel bandwidth.
-'''
-
-def fit_kernelized_owl(model:OWLMixtureModel, ball:ProbabilityBall, kde:KDE, bandwidth_schedule:list, repeats=10, admmsteps=1000, verbose:bool=True):
-    best_model = deepcopy(model)
-    curr_model = deepcopy(model)
-    best_ll = -np.infty
-    for bandwidth in bandwidth_schedule:
-        kde.recalculate_kernel(bandwidth=bandwidth)
-        for _ in range(repeats):
-                curr_model.fit_owl(ball=ball, n_iters=15, kde=kde, admmsteps=admmsteps, verbose=verbose)
-                prob = curr_model.w/np.sum(curr_model.w)
-                ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+        for bw in bandwidth_schedule:
+            if (kde is not None) and (kde.bandwidth != bw):
+                kde.recalculate_kernel(bandwidth=bw)
+            
+            for _ in range(self.repeats):
+                self.owl_step(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, verbose=verbose)
+                prob = self.w/np.sum(self.w)
+                ll = np.dot(prob, self.log_likelihood()) - np.nansum(xlogy(prob , prob))
                 if ll > best_ll:
                     best_ll = ll
-                    best_model = deepcopy(curr_model)
+                    best_dict = deepcopy(self.__dict__)
 
                 ## Reinitialize current model
-                curr_model.reinitialize(reset_w=True)
-    return(best_model)
+                self.reinitialize(reset_w=True)
+        
+        ## Update model to be the best found model
+        self.__dict__.update(best_dict)
+
+    def fit_mle(self, **kwargs):
+        best_dict = deepcopy(self.__dict__)
+        best_ll = -np.infty
+        for _ in range(self.repeats):
+            self.maximize_weighted_likelihood()
+            ll = np.sum(self.log_likelihood())
+            if ll > best_ll:
+                best_ll = ll
+                best_dict = deepcopy(self.__dict__)
+
+        ## Update model to be the best found model
+        self.__dict__.update(best_dict)
+
+# '''
+#     Fits a maximum likelihood model using EM with random restarts.
+# '''
+# def fit_mle(model:OWLMixtureModel, repeats:int=25):
+#     best_model = deepcopy(model)
+#     curr_model = deepcopy(model)
+#     best_ll = -np.infty
+#     for _ in range(repeats):
+#         curr_model.maximize_weighted_likelihood()
+#         ll = np.sum(curr_model.log_likelihood())
+#         if ll > best_ll:
+#             best_ll = ll
+#             best_model = deepcopy(curr_model)
+
+#         ## Reinitialize current model
+#         curr_model.reinitialize(reset_w=True)
+#     return(best_model)
+
+# '''
+#     Fits an OWL model using alternating optimization with random restarts.
+# '''
+
+# def fit_owl(model:OWLMixtureModel, ball:ProbabilityBall, repeats=10, admmsteps=1000, verbose:bool=True):
+#     best_model = deepcopy(model)
+#     curr_model = deepcopy(model)
+#     best_ll = -np.infty
+#     for _ in range(repeats):
+#         curr_model.fit_owl(ball=ball, n_iters=15, kde=None, admmsteps=admmsteps, verbose=verbose)
+#         prob = curr_model.w/np.sum(curr_model.w)
+#         ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+#         if ll > best_ll:
+#             best_ll = ll
+#             best_model = deepcopy(curr_model)
+
+#         ## Reinitialize current model
+#         curr_model.reinitialize(reset_w=True)
+#     return(best_model)
+
+
+# '''
+#     Fits a kernelized OWL model using alternating optimization with random restarts 
+#     + bandwidth search for the kernel bandwidth.
+# '''
+
+# def fit_kernelized_owl(model:OWLMixtureModel, ball:ProbabilityBall, kde:KDE, bandwidth_schedule:list, repeats=10, admmsteps=1000, verbose:bool=True):
+#     best_model = deepcopy(model)
+#     curr_model = deepcopy(model)
+#     best_ll = -np.infty
+#     for bandwidth in bandwidth_schedule:
+#         kde.recalculate_kernel(bandwidth=bandwidth)
+#         for _ in range(repeats):
+#                 curr_model.fit_owl(ball=ball, n_iters=15, kde=kde, admmsteps=admmsteps, verbose=verbose)
+#                 prob = curr_model.w/np.sum(curr_model.w)
+#                 ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
+#                 if ll > best_ll:
+#                     best_ll = ll
+#                     best_model = deepcopy(curr_model)
+
+#                 ## Reinitialize current model
+#                 curr_model.reinitialize(reset_w=True)
+#     return(best_model)
 
 '''
     Mixture of spherical Gaussians.
@@ -146,7 +198,7 @@ class SphericalGMM(OWLMixtureModel):
 
     def reinitialize(self, reset_w: bool, **kwargs) -> None:
         if reset_w:
-            self.w = np.ones(self.n)
+            self.reset_w()
 
         clus = AgglomerativeClustering(n_clusters=self.K, linkage='ward')
         clus.fit(self.X)
@@ -260,7 +312,7 @@ class GeneralGMM(OWLMixtureModel):
 
     def reinitialize(self, reset_w: bool, **kwargs) -> None:
         if reset_w:
-            self.w = np.ones(self.n)
+            self.reset_w()
 
         clus = AgglomerativeClustering(n_clusters=self.K, linkage='ward')
         clus.fit(self.X)
@@ -376,7 +428,7 @@ class BernoulliMM(OWLMixtureModel):
         self.pi = np.random.dirichlet(alpha=(1.0/self.K * np.ones(self.K)))
         self.lam = np.random.beta(a=self.alpha, b=self.beta, size=(self.K, self.p))
         if reset_w:
-            self.w = np.ones(self.n)
+            self.reset_w()
             self.wX = np.einsum('ij, i -> ij', self.X, self.w) 
 
     def set_w(self, w: np.ndarray, **kwargs):
