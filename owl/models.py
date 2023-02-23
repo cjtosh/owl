@@ -83,10 +83,11 @@ class OWLModel(object):
 ## Helper function 
 def p_owl_fit(model:OWLModel, 
               ball:ProbabilityBall, 
+              n_iters:int=10,
               kde:KDE=None, 
               admmsteps:int=1000, 
               admmtol:float=10e-5):
-    model.fit_owl(ball=ball, kde=kde, admmsteps=admmsteps, admmtol=admmtol)
+    model.fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol)
     prob = model.w/np.sum(model.w)
     val = np.dot(prob, model.log_likelihood()) - np.nansum(xlogy(prob , prob))
     return(model, -val)
@@ -94,6 +95,7 @@ def p_owl_fit(model:OWLModel,
 
 def fit_owl(model:OWLModel, 
             ball:ProbabilityBall, 
+            n_iters:int=10,
             epsilons:np.ndarray=None, 
             kde:KDE=None, 
             admmsteps:int=1000, 
@@ -115,7 +117,7 @@ def fit_owl(model:OWLModel,
         models.append(m)
 
     pfit = delayed(p_owl_fit)
-    jobs = (pfit(model=m, ball=b, kde=kde, admmsteps=admmsteps, admmtol=admmtol) for m, b in zip(models, balls))
+    jobs = (pfit(model=m, ball=b, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol) for m, b in zip(models, balls))
     result = prun(jobs, n_workers)
 
     models = []
