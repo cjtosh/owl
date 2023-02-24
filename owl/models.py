@@ -156,7 +156,7 @@ def fit_owl(model:OWLModel,
         smoothed_values = np.empty(len(values))
         smoothed_values[0] = values[0]
         for i in range(1, len(smoothed_values)):
-            smoothed_values[i] = np.min([smoothed_values[i-1], smoothed_values[i]])
+            smoothed_values[i] = np.min([smoothed_values[i-1], values[i]])
 
         ## Compute curvature
         deriv_1 = np.gradient(smoothed_values, epsilons)
