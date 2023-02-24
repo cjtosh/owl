@@ -6,7 +6,7 @@ import pickle
 import os
 from kneed import KneeLocator
 from sklearn.cluster import KMeans
-from owl.mixture_models import fit_mle, GeneralGMM
+from owl.mixture_models import GeneralGMM
 from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score
 from tqdm import tqdm
@@ -861,7 +861,7 @@ mle_aris = []
 for seed in tqdm(seeds):
     np.random.seed(seed)
     gmm = GeneralGMM(X=X_pca, K=7)
-    gmm = fit_mle(gmm, repeats=10)
+    gmm.fit_mle()
     mle_aris.append(adjusted_rand_score(groups_no_b, gmm.z))
 
 

@@ -92,6 +92,25 @@ def p_owl_fit(model:OWLModel,
     val = np.dot(prob, model.log_likelihood()) - np.nansum(xlogy(prob , prob))
     return(model, -val)
 
+# ## Computes central discrete derivative of y relative to grid x
+# def discrete_derivative(x, y):
+#     x0 = x[:-2]
+#     x1 = x[1:-1]
+#     x2 = x[2:]
+#     y0 = y[:-2]
+#     y1 = y[1:-1]
+#     y2 = y[2:]
+#     f = (x2 - x1)/(x2 - x0)
+#     return((1-f)*(y2 - y1)/(x2 - x1) + f*(y1 - y0)/(x1 - x0))
+
+## Computes curvature of y relative to grid x
+# def curvature(x, y):
+#     deriv_1 = discrete_derivative(x, y)
+#     deriv_2 = discrete_derivative(x[1:-1], deriv_1)
+#     return(deriv_2/np.power(1+ np.square(deriv_1[1:-1]), 1.5))
+
+
+
 
 def fit_owl(model:OWLModel, 
             ball:ProbabilityBall, 
@@ -101,6 +120,7 @@ def fit_owl(model:OWLModel,
             admmsteps:int=1000, 
             admmtol:float=10e-5, 
             n_workers:int=1,
+            percentile:float=90,
             return_all:bool=False):
 
     ## Just one radius
@@ -128,9 +148,24 @@ def fit_owl(model:OWLModel,
 
     if return_all:
         return(models, values)
+    elif len(epsilons)<=2:
+        idx = np.argmin(values)
+        return(models[idx])
     else:
-        kneedle = KneeLocator(epsilons, savgol_filter(values, 2, 1), curve="convex", direction="decreasing")
-        idx = np.where(epsilons==kneedle.elbow)[0][0]
+        ## Compute rolling min
+        smoothed_values = np.empty(len(values))
+        smoothed_values[0] = values[0]
+        for i in range(1, len(smoothed_values)):
+            smoothed_values[i] = np.min([smoothed_values[i-1], smoothed_values[i]])
+
+        ## Compute curvature
+        deriv_1 = np.gradient(smoothed_values, epsilons)
+        deriv_2 = np.gradient(deriv_1, epsilons)
+        curv = deriv_2/np.power(1+ np.square(deriv_1), 1.5)
+
+        ## Choose right-most model with largest curvature 
+        val = np.percentile(val, percentile)
+        idx = np.max(np.where(curv > val)[0])
         return(models[idx])
 
 

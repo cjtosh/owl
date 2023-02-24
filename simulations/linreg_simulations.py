@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from owl.regression import LinearRegression
 
+ADMMSTEPS = 10000
 
 def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_test_:np.ndarray, y_test_:np.ndarray, epsilon, corr_type):
     results = []
@@ -29,8 +30,6 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     r2 = lr.r2_score(X_test, y_test)
 
     resids = y_train - lr.predict(X_train)
-    # max_val = np.max(y_train)
-    # min_val = np.min(y_train)
     v = np.max(np.abs(y_train))
 
     results.append({"Method": "Uncorrupted MLE", 
@@ -47,7 +46,6 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
         inds_corrupt = np.random.choice(n_train, size=n_corrupt, replace=False)
     
     resid_corrupt = resids[inds_corrupt]
-    # y_train[inds_corrupt] = np.where(resid_corrupt>0, max_val, min_val)
     y_train[inds_corrupt] = 3*np.where(resid_corrupt>0, v, -v)
 
 
@@ -65,14 +63,14 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Test R^2": r2,
                     "Corruption type": corr_type})
     
-    ## Robust logistic regression   
+
+    ## OWL with TV distance (search for radius)   
     rob_lr = LinearRegression(X=X_train, y=y_train)
-    # l1_ball = L1Ball(n=n_train, r=2*epsilon)
     l1_ball = L1Ball(n=n_train, r=1.0)
-    # rob_lr.fit_owl(ball=l1_ball, n_iters=10)
     rob_lr = fit_owl(rob_lr, 
                      l1_ball, 
-                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
+                     admmsteps=ADMMSTEPS,
                      n_workers=4)
     
     train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
@@ -85,6 +83,24 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Train MSE": train_mse,
                     "Test R^2": r2,
                     "Corruption type": corr_type})
+    
+
+    ## OWL with TV distance (known radius)   
+    rob_lr = LinearRegression(X=X_train, y=y_train)
+    l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    rob_lr.fit_owl(ball=l1_ball, admmsteps=ADMMSTEPS)
+    
+    train_mse = np.mean( np.square(rob_lr.predict(X_train) - y_train))
+    test_mse = np.mean( np.square(rob_lr.predict(X_test) - y_test))
+    r2 = rob_lr.r2_score(X_test, y_test)
+
+    results.append({"Method": "OWL ($\epsilon$ known)", 
+                    "Corruption fraction": epsilon, 
+                    "Test MSE": test_mse,
+                    "Train MSE": train_mse,
+                    "Test R^2": r2,
+                    "Corruption type": corr_type})
+
 
     ## Scale the data
     scaler = StandardScaler()
@@ -172,7 +188,7 @@ if __name__ == "__main__":
     elif args.dataset=='random':
         stdv_0 = 2.0
         stdv = 0.25
-        n = 1000
+        n = 5000
         p = 10
         w = stdv_0*np.random.randn(p)
 

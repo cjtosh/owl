@@ -8,7 +8,7 @@ import os, sys
 import pickle
 from tqdm import tqdm
 
-ADMMSTEPS=1000
+ADMMSTEPS=5000
 
 '''
     This script implements a Bernoulli mixture model simulation.
@@ -84,6 +84,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
 
     ## Regular MLE
     mle = BernoulliMM(X=X, K=K, hard=False)
+    mle.fit_mle()
     l1_dist = mle.mean_mae(lam)
 
     results.append({"Method": "MLE", 
@@ -91,12 +92,12 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Parameter L1 distance": l1_dist,
                     "Corruption type": corr_type})
 
-    ## TV OWL
+    ## OWL with TV dist (Search for radius)
     bmm = BernoulliMM(X=X, K=K, hard=True)
     l1_ball = L1Ball(n=n, r=1.0)
     owl_tv = fit_owl(bmm, 
                      l1_ball, 
-                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
                      admmsteps=ADMMSTEPS,
                      n_workers=4)
     l1_dist = owl_tv.mean_mae(lam)
@@ -105,6 +106,19 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
                     "Corruption type": corr_type})
+    
+    
+    ## OWL with TV dist (known radius)
+    owl_tv = BernoulliMM(X=X, K=K, hard=True)
+    l1_ball = L1Ball(n=n, r=2*epsilon)
+    owl_tv.fit_owl(l1_ball, admmsteps=ADMMSTEPS)
+    l1_dist = owl_tv.mean_mae(lam)
+
+    results.append({"Method": "OWL ($\epsilon$ known)", 
+                    "Corruption fraction": epsilon, 
+                    "Parameter L1 distance": l1_dist,
+                    "Corruption type": corr_type})
+
 
     return(results)
 

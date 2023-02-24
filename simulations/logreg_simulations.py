@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from owl.ball import L1Ball
 
+ADMMSTEPS = 5000
+
 
 def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_test_:np.ndarray, y_test_:np.ndarray, epsilon, corr_type):
     results = []
@@ -51,19 +53,33 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Train accuracy": train_acc,
                     "Corruption type": corr_type})
     
-    ## Robust logistic regression   
+    ## OWL with TV distance (search for radius)  
     rob_lr = LogisticRegression(X=X_train, y=y_train)
-    # l1_ball = L1Ball(n=n_train, r=2*epsilon)
-    # rob_lr.fit_owl(ball=l1_ball, n_iters=10)
     l1_ball = L1Ball(n=n_train, r=1.0)
     rob_lr = fit_owl(rob_lr, 
                      l1_ball, 
-                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
+                     admmsteps=ADMMSTEPS,
                      n_workers=4)
     
     train_acc = np.mean( rob_lr.predict(X_train) == y_train)
     test_acc = np.mean( rob_lr.predict(X_test) == y_test)
     results.append({"Method": "OWL (TV)", 
+                    "Corruption fraction": epsilon, 
+                    "Test accuracy": test_acc,
+                    "Train accuracy": train_acc,
+                    "Corruption type": corr_type})
+    
+
+    ## OWL with TV distance (known radius)
+    rob_lr = LogisticRegression(X=X_train, y=y_train)
+    l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    rob_lr.fit_owl(ball=l1_ball, admmsteps=ADMMSTEPS)
+
+    
+    train_acc = np.mean( rob_lr.predict(X_train) == y_train)
+    test_acc = np.mean( rob_lr.predict(X_test) == y_test)
+    results.append({"Method": "OWL ($\epsilon$ known)", 
                     "Corruption fraction": epsilon, 
                     "Test accuracy": test_acc,
                     "Train accuracy": train_acc,
@@ -161,7 +177,7 @@ if __name__ == "__main__":
         X_test = pca.transform(X[~train_mask])
     elif args.dataset=='random':
         stdv = 2.0
-        n = 1000
+        n = 5000
         p = 10
         w = stdv*np.random.randn(p)
 

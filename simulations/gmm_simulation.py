@@ -70,18 +70,32 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
 
-    ## OWL with TV dist
+
+
+    ## OWL with TV dist (Search for radius)
     gmm = SphericalGMM(X, K=K, hard=True)
     l1_ball = L1Ball(n=n, r=1.0)
     owl_tv = fit_owl(gmm, 
                      l1_ball, 
-                     epsilons=np.linspace(0.01, 0.5, 15), 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
                      admmsteps=ADMMSTEPS,
                      n_workers=4)
-                     
+    mean_dist = owl_tv.mean_mse(mu)
+    
+    results.append({"Method": "OWL (TV)", 
+                    "Corruption fraction": epsilon, 
+                    "Mean MSE": mean_dist,
+                    "Corruption type": corr_type,
+                    "Corruption scale": corr_scale})
+    
+
+    ## OWL with TV dist (known radius)
+    owl_tv = SphericalGMM(X, K=K, hard=True)
+    l1_ball = L1Ball(n=n, r=epsilon)
+    owl_tv.fit_owl(l1_ball, admmsteps=ADMMSTEPS)
     mean_dist = owl_tv.mean_mse(mu)
 
-    results.append({"Method": "OWL (TV)", 
+    results.append({"Method": "OWL ($\epsilon$ known)", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
                     "Corruption type": corr_type,
