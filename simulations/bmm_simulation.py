@@ -100,6 +100,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                      epsilons=np.linspace(0.01, 0.5, 20), 
                      admmsteps=ADMMSTEPS,
                      n_workers=4)
+    
     l1_dist = owl_tv.mean_mae(lam)
 
     results.append({"Method": "OWL (TV)", 

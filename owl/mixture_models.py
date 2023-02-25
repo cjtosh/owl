@@ -103,68 +103,6 @@ class OWLMixtureModel(OWLModel):
         ## Update model to be the best found model
         self.__dict__.update(best_dict)
 
-# '''
-#     Fits a maximum likelihood model using EM with random restarts.
-# '''
-# def fit_mle(model:OWLMixtureModel, repeats:int=25):
-#     best_model = deepcopy(model)
-#     curr_model = deepcopy(model)
-#     best_ll = -np.infty
-#     for _ in range(repeats):
-#         curr_model.maximize_weighted_likelihood()
-#         ll = np.sum(curr_model.log_likelihood())
-#         if ll > best_ll:
-#             best_ll = ll
-#             best_model = deepcopy(curr_model)
-
-#         ## Reinitialize current model
-#         curr_model.reinitialize(reset_w=True)
-#     return(best_model)
-
-# '''
-#     Fits an OWL model using alternating optimization with random restarts.
-# '''
-
-# def fit_owl(model:OWLMixtureModel, ball:ProbabilityBall, repeats=10, admmsteps=1000, verbose:bool=True):
-#     best_model = deepcopy(model)
-#     curr_model = deepcopy(model)
-#     best_ll = -np.infty
-#     for _ in range(repeats):
-#         curr_model.fit_owl(ball=ball, n_iters=15, kde=None, admmsteps=admmsteps, verbose=verbose)
-#         prob = curr_model.w/np.sum(curr_model.w)
-#         ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
-#         if ll > best_ll:
-#             best_ll = ll
-#             best_model = deepcopy(curr_model)
-
-#         ## Reinitialize current model
-#         curr_model.reinitialize(reset_w=True)
-#     return(best_model)
-
-
-# '''
-#     Fits a kernelized OWL model using alternating optimization with random restarts 
-#     + bandwidth search for the kernel bandwidth.
-# '''
-
-# def fit_kernelized_owl(model:OWLMixtureModel, ball:ProbabilityBall, kde:KDE, bandwidth_schedule:list, repeats=10, admmsteps=1000, verbose:bool=True):
-#     best_model = deepcopy(model)
-#     curr_model = deepcopy(model)
-#     best_ll = -np.infty
-#     for bandwidth in bandwidth_schedule:
-#         kde.recalculate_kernel(bandwidth=bandwidth)
-#         for _ in range(repeats):
-#                 curr_model.fit_owl(ball=ball, n_iters=15, kde=kde, admmsteps=admmsteps, verbose=verbose)
-#                 prob = curr_model.w/np.sum(curr_model.w)
-#                 ll = np.dot(prob, curr_model.log_likelihood()) - np.nansum(xlogy(prob , prob))
-#                 if ll > best_ll:
-#                     best_ll = ll
-#                     best_model = deepcopy(curr_model)
-
-#                 ## Reinitialize current model
-#                 curr_model.reinitialize(reset_w=True)
-#     return(best_model)
-
 '''
     Mixture of spherical Gaussians.
 '''
@@ -175,11 +113,12 @@ class SphericalGMM(OWLMixtureModel):
                 w:np.ndarray = None, 
                 hard:bool = True, 
                 em_steps:int=20,
+                repeats:int=10, ## How many random repeats will we perform when fitting MLE or OWL?
                 **kwargs
                 ):
         self.X = deepcopy(X)
         n, self.p = X.shape
-        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps)
+        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps, repeats=repeats, **kwargs)
         self.K = K
 
         ## Need a lower bound on variances
@@ -291,11 +230,12 @@ class GeneralGMM(OWLMixtureModel):
         w:np.ndarray = None,
         hard:bool = True, 
         em_steps:int=20,
+        repeats:int=10, ## How many random repeats will we perform when fitting MLE or OWL?
         **kwargs
         ):
         self.X = deepcopy(X)
         n, self.p = X.shape
-        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps)
+        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps, repeats=repeats, **kwargs)
         self.K = K
 
         self.var_lower_bound = 0.1*np.min(pdist(self.X, metric='sqeuclidean')) ## Minimum distance between two points.
@@ -407,11 +347,12 @@ class BernoulliMM(OWLMixtureModel):
         w:np.ndarray = None, ## Weights over the samples (set to None for uniform)
         hard:bool=True, ## Whether or not maximization is done via hard or soft EM
         em_steps:int=20, ## How many EM steps to do for weighted likelihood maximization
+        repeats:int=10, ## How many repeats
         **kwargs
         ):
         self.X = X
         n, self.p = X.shape
-        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps)
+        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps, repeats=repeats, **kwargs)
 
         self.alpha = alpha
         self.beta = beta

@@ -19,7 +19,7 @@ bsub -J 'gmm[1-50]' -W 15:00 -n 6 -e output_logs/gmm_%I.err -o output_logs/gmm_%
 
 bsub -J 'bmm[1-50]' -W 6:00 -n 6 -e output_logs/bmm_%I.err -o output_logs/bmm_%I.out sh scripts/bmm_simulation.sh
 
-bsub -J 'rna[1-270]' -W 1:00 -e output_logs/rna_%I.err -o output_logs/rna_%I.out sh scripts/rna_elbows.sh
+bsub -J 'rna[1-321]' -W 1:30 -e output_logs/rna_%I.err -o output_logs/rna_%I.out sh scripts/rna_elbows.sh
 
 ## Gaussian
 

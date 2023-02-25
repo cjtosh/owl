@@ -16,11 +16,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
 
-    epsilons = np.array([0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+    epsilons = np.linspace(0.05, 0.8, 16)
     neps = len(epsilons)
 
     args = parser.parse_args()
-    seed = 100 + (args.seed // neps)
+    seed = 100 + ((args.seed-1) // neps)
 
     eps_idx = args.seed % neps
     eps = epsilons[eps_idx] 
@@ -44,16 +44,23 @@ if __name__ == "__main__":
     results = []
     Ks = np.arange(2, 15)
     for k in tqdm(Ks):
-        gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True)
+        ## Initialize GMM
+        gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True, repeats=5)
 
+        ## Fit with OWL 
         l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
-        gmm_tv = fit_owl(gmm_tv, l1_ball, repeats=5, admmsteps=2000, verbose=False)
-        mask = (gmm_tv.w >= 1.0)
-        ll_vec = gmm_tv.log_likelihood()
-        wll = np.dot(gmm_tv.w,ll_vec)
+        gmm_tv.fit_owl(l1_ball, admmsteps=5000, verbose=False)
 
+        ## Weighted log-likelihood
+        ll_vec = gmm_tv.log_likelihood()
+        wll = np.dot(gmm_tv.w, ll_vec)
+
+        ## KL estimator
         probs = gmm_tv.w/np.sum(gmm_tv.w)
         kl = np.nansum(xlogy(probs , probs)) - np.dot(probs, ll_vec)
+
+        ## Get inliers
+        mask = (gmm_tv.w >= 1.0)
         num_inliers = np.sum(mask)
 
         results.append({"K": k, 

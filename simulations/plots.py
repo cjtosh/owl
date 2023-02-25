@@ -36,13 +36,14 @@ def load_results(folder):
 
 os.makedirs('figures', exist_ok=True)
 
-colors = sns.color_palette("husl", 5)
-logistic_orders = ['OWL', 'RANSAC MLE', 'Regularized MLE (CV)', 'MLE']
+colors = sns.color_palette("husl", 6)
+logistic_orders = ['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Regularized MLE (CV)', 'MLE']
 linear_orders = ['MLE', 'Ridge Regression (CV)', 'RANSAC MLE', 'Huber Regression', 'OWL']
 sublinear_orders = ['RANSAC MLE', 'Huber Regression', 'OWL']
 
 
 palette={'OWL':colors[0], 
+         'OWL ($\epsilon$ known)':colors[5], 
          'MLE':colors[1], 
          'Regularized MLE (CV)':colors[4], 
          'RANSAC MLE':colors[3], 

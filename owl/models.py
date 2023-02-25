@@ -92,25 +92,6 @@ def p_owl_fit(model:OWLModel,
     val = np.dot(prob, model.log_likelihood()) - np.nansum(xlogy(prob , prob))
     return(model, -val)
 
-# ## Computes central discrete derivative of y relative to grid x
-# def discrete_derivative(x, y):
-#     x0 = x[:-2]
-#     x1 = x[1:-1]
-#     x2 = x[2:]
-#     y0 = y[:-2]
-#     y1 = y[1:-1]
-#     y2 = y[2:]
-#     f = (x2 - x1)/(x2 - x0)
-#     return((1-f)*(y2 - y1)/(x2 - x1) + f*(y1 - y0)/(x1 - x0))
-
-## Computes curvature of y relative to grid x
-# def curvature(x, y):
-#     deriv_1 = discrete_derivative(x, y)
-#     deriv_2 = discrete_derivative(x[1:-1], deriv_1)
-#     return(deriv_2/np.power(1+ np.square(deriv_1[1:-1]), 1.5))
-
-
-
 
 def fit_owl(model:OWLModel, 
             ball:ProbabilityBall, 
@@ -164,7 +145,7 @@ def fit_owl(model:OWLModel,
         curv = deriv_2/np.power(1+ np.square(deriv_1), 1.5)
 
         ## Choose right-most model with largest curvature 
-        val = np.percentile(val, percentile)
+        val = np.percentile(curv, percentile)
         idx = np.max(np.where(curv > val)[0])
         return(models[idx])
 
