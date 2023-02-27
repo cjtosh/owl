@@ -79,7 +79,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
                      l1_ball, 
                      epsilons=np.linspace(0.01, 0.5, 20), 
                      admmsteps=ADMMSTEPS,
-                     n_workers=4)
+                     n_workers=6)
     mean_dist = owl_tv.mean_mse(mu)
     
     results.append({"Method": "OWL (TV)", 
