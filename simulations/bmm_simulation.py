@@ -62,6 +62,14 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     mle = BernoulliMM(X=X, K=K, hard=False)
     mle.fit_mle()
 
+    ## Evaluate uncorrupted MLE
+    l1_dist = mle.mean_mae(lam)
+
+    results.append({"Method": "Uncorrupted MLE", 
+                    "Corruption fraction": epsilon, 
+                    "Parameter L1 distance": l1_dist,
+                    "Corruption type": corr_type})
+    
     if corr_type=='max':
         lls = mle.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
@@ -74,13 +82,6 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     for i in inds_corrupt:
         X[i] = corrupt(X[i])
     
-    ## Evaluate uncorrupted MLE
-    l1_dist = mle.mean_mae(lam)
-
-    results.append({"Method": "Uncorrupted MLE", 
-                    "Corruption fraction": epsilon, 
-                    "Parameter L1 distance": l1_dist,
-                    "Corruption type": corr_type})
 
     ## Regular MLE
     mle = BernoulliMM(X=X, K=K, hard=False)

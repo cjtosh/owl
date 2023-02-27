@@ -350,7 +350,7 @@ class BernoulliMM(OWLMixtureModel):
         repeats:int=10, ## How many repeats
         **kwargs
         ):
-        self.X = X
+        self.X = X.copy()
         n, self.p = X.shape
         super().__init__(n=n, w=w, hard=hard, em_steps=em_steps, repeats=repeats, **kwargs)
 

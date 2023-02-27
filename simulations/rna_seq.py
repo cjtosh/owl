@@ -6,7 +6,7 @@ import pickle
 import argparse
 from tqdm import tqdm
 from sklearn.decomposition import PCA
-from owl.mixture_models import GeneralGMM, fit_owl
+from owl.mixture_models import GeneralGMM
 from owl.ball import L1Ball
 from sklearn.metrics import adjusted_rand_score
 from scipy.special import xlogy
