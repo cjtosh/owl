@@ -67,7 +67,7 @@ fig, axs = plt.subplots(nrows=1, ncols=3, figsize=size_1x3)
 
 max_df, _ = load_results('results/logistic_regression/random/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 
@@ -81,7 +81,7 @@ axs[0].legend(handles=handles, labels=labels)
 
 max_df, _ = load_results('results/logistic_regression/mnist/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -93,7 +93,7 @@ axs[1].legend(handles=handles, labels=labels)
 
 max_df, _ = load_results('results/logistic_regression/enron/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 axs[2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -114,7 +114,7 @@ fig, axs = plt.subplots(nrows=1, ncols=3, figsize=size_1x3)
 
 _, rand_df = load_results('results/logistic_regression/random/')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 
@@ -128,7 +128,7 @@ axs[0].legend(handles=handles, labels=labels)
 
 _, rand_df = load_results('results/logistic_regression/mnist/')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -140,7 +140,7 @@ axs[1].legend(handles=handles, labels=labels)
 
 _, rand_df = load_results('results/logistic_regression/enron/')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 axs[2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -161,7 +161,7 @@ fig, axs = plt.subplots(nrows=2, ncols=3, figsize=size_2x3)
 
 max_df, rand_df = load_results('results/logistic_regression/random/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
@@ -182,7 +182,7 @@ axs[1,0].legend(handles=handles, labels=labels)
 
 max_df, rand_df = load_results('results/logistic_regression/mnist/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
@@ -201,7 +201,7 @@ axs[1,1].legend(handles=handles, labels=labels)
 
 max_df, rand_df = load_results('results/logistic_regression/enron/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Test accuracy'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
@@ -248,7 +248,7 @@ fig, axs = plt.subplots(nrows=2, ncols=2, figsize=size_2x2)
 max_df, _ = load_results('results/linear_regression/random/')
 
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 
@@ -268,7 +268,7 @@ axs[1,0].legend(handles=handles, labels=labels)
 
 max_df, _ = load_results('results/linear_regression/qsar/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 
@@ -305,7 +305,7 @@ fig, axs = plt.subplots(nrows=2, ncols=2, figsize=size_2x2)
 _, rand_df = load_results('results/linear_regression/random/')
 
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"][y].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 
@@ -325,7 +325,7 @@ axs[1,0].legend(handles=handles, labels=labels)
 
 _, rand_df = load_results('results/linear_regression/qsar/')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"][y].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 
@@ -361,7 +361,7 @@ max_df, rand_df = load_results('results/linear_regression/random/')
 
 
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
@@ -399,7 +399,7 @@ axs[1,1].legend(handles=handles, labels=labels)
 
 max_df, rand_df = load_results('results/linear_regression/qsar/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"][y].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
@@ -450,7 +450,7 @@ plt.savefig('figures/lin_corruption.pdf', bbox_inches='tight')
 
 max_df, _ = load_results('results/gmm_simulation/dim_10')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"].reset_index(drop=True)
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=size_1x2)
@@ -464,7 +464,7 @@ axs[0].legend(handles=handles, labels=labels)
 
 max_df, rand_df = load_results('results/bmm_simulation/dim_100/')
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Parameter L1 distance'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Parameter L1 distance'].median()
 max_df = max_df[max_df['Method']!="Uncorrupted MLE"]
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -484,7 +484,7 @@ plt.savefig('figures/clustering_max_corruption.pdf', bbox_inches='tight')
 
 _, rand_df = load_results('results/gmm_simulation/dim_10')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"].reset_index(drop=True)
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=size_1x2)
@@ -498,7 +498,7 @@ axs[0].legend(handles=handles, labels=labels)
 
 _, rand_df = load_results('results/bmm_simulation/dim_100/')
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Parameter L1 distance'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Parameter L1 distance'].median()
 rand_df = rand_df[rand_df['Method']!="Uncorrupted MLE"]
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
@@ -522,7 +522,7 @@ fig, axs = plt.subplots(nrows=1, ncols=3, figsize=size_1x3)
 max_df, _ = load_results('results/gaussian/dim_2/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -537,7 +537,7 @@ axs[0].legend(handles=handles, labels=labels)
 max_df, _ = load_results('results/gaussian/dim_25/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -552,7 +552,7 @@ axs[1].legend(handles=handles, labels=labels)
 max_df, _ = load_results('results/gaussian/dim_50/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -576,7 +576,7 @@ fig, axs = plt.subplots(nrows=2, ncols=3, figsize=size_2x3)
 max_df, _ = load_results('results/gaussian/dim_2/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE
@@ -600,7 +600,7 @@ axs[1,0].legend(handles=handles, labels=labels)
 max_df, _ = load_results('results/gaussian/dim_25/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE
@@ -625,7 +625,7 @@ axs[1,1].legend(handles=handles, labels=labels)
 max_df, _ = load_results('results/gaussian/dim_50/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
-uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE
@@ -658,7 +658,7 @@ fig, axs = plt.subplots(nrows=1, ncols=3, figsize=size_1x3)
 _, rand_df = load_results('results/gaussian/dim_2/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -673,7 +673,7 @@ axs[0].legend(handles=handles, labels=labels)
 _, rand_df = load_results('results/gaussian/dim_25/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -688,7 +688,7 @@ axs[1].legend(handles=handles, labels=labels)
 _, rand_df = load_results('results/gaussian/dim_50/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
@@ -712,7 +712,7 @@ fig, axs = plt.subplots(nrows=2, ncols=3, figsize=size_2x3)
 _, rand_df = load_results('results/gaussian/dim_2/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE
@@ -736,7 +736,7 @@ axs[1,0].legend(handles=handles, labels=labels)
 _, rand_df = load_results('results/gaussian/dim_25/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE
@@ -761,7 +761,7 @@ axs[1,1].legend(handles=handles, labels=labels)
 _, rand_df = load_results('results/gaussian/dim_50/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
-uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].mean()
+uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
 
 ## First plot with MLE

@@ -36,7 +36,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     n_corrupt = int(epsilon*n)
     
     ## Fit a MLE
-    mle = SphericalGMM(X, K=K, hard=False)
+    mle = SphericalGMM(X, K=K, repeats=100, hard=False)
     mle.fit_mle()
     
     ## Uncorrupted distances
@@ -60,7 +60,7 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
                     "Corruption scale": corr_scale})
 
     ## MLE on corrupted data
-    mle = SphericalGMM(X, K=K, hard=False)
+    mle = SphericalGMM(X, K=K, repeats=100, hard=False)
     mle.fit_mle()
     mean_dist = mle.mean_mse(mu)
 

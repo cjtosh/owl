@@ -59,7 +59,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     results = []
     n_corrupt = int(epsilon*n)
     
-    mle = BernoulliMM(X=X, K=K, hard=False)
+    mle = BernoulliMM(X=X, K=K, repeats=100, hard=False)
     mle.fit_mle()
 
     ## Evaluate uncorrupted MLE
@@ -84,7 +84,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     
 
     ## Regular MLE
-    mle = BernoulliMM(X=X, K=K, hard=False)
+    mle = BernoulliMM(X=X, K=K, repeats=100, hard=False)
     mle.fit_mle()
     l1_dist = mle.mean_mae(lam)
 
