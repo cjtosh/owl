@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
 
-    epsilons = np.linspace(0.05, 0.8, 16)
+    epsilons = np.linspace(0.05, 0.6, 16)
     neps = len(epsilons)
 
     args = parser.parse_args()
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         ## Fit with OWL 
         l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
-        gmm_tv.fit_owl(l1_ball, admmsteps=20000, verbose=False)
+        gmm_tv.fit_owl(l1_ball, n_iters=25, admmsteps=20000, admmtol=1e-6, verbose=False)
 
         ## Weighted log-likelihood
         ll_vec = gmm_tv.log_likelihood()
