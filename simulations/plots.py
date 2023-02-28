@@ -29,8 +29,8 @@ def load_results(folder):
     rand_df.replace("CMLE (TV)", "OWL", inplace=True)
     max_df.replace("OWL (TV)", "OWL", inplace=True)
     rand_df.replace("OWL (TV)", "OWL", inplace=True)
-    max_df.replace("OWL (Kernelized - TV)", "OWL (Kernelized)", inplace=True)
-    rand_df.replace("OWL (Kernelized - TV)", "OWL (Kernelized)", inplace=True)
+    max_df.replace("OWL (Kernelized - TV)", "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+    rand_df.replace("OWL (Kernelized - TV)", "OWL (Kernelized, $\epsilon$ known)", inplace=True)
     return(max_df, rand_df)
 
 
@@ -38,18 +38,18 @@ os.makedirs('figures', exist_ok=True)
 
 colors = sns.color_palette("husl", 6)
 logistic_orders = ['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Regularized MLE (CV)', 'MLE']
-linear_orders = ['MLE', 'Ridge Regression (CV)', 'RANSAC MLE', 'Huber Regression', 'OWL']
-sublinear_orders = ['RANSAC MLE', 'Huber Regression', 'OWL']
+linear_orders = ['MLE', 'Ridge Regression (CV)', 'RANSAC MLE', 'Huber Regression', 'OWL', 'OWL ($\epsilon$ known)']
+sublinear_orders = ['RANSAC MLE', 'Huber Regression', 'OWL', 'OWL ($\epsilon$ known)']
 
 
 palette={'OWL':colors[0], 
-         'OWL ($\epsilon$ known)':colors[5], 
-         'MLE':colors[1], 
-         'Regularized MLE (CV)':colors[4], 
+         'OWL ($\epsilon$ known)':colors[2], 
+         'MLE':colors[4], 
+         'Regularized MLE (CV)':colors[1], 
          'RANSAC MLE':colors[3], 
-         'Ridge Regression (CV)':colors[4], 
-         'Huber Regression':colors[2],
-         'OWL (Kernelized)':colors[2]}
+         'Ridge Regression (CV)':colors[1], 
+         'Huber Regression':colors[5],
+         "OWL (Kernelized, $\epsilon$ known)":colors[5]}
 
 size_2x3 = (16,8)
 size_2x2 = (13,8)
@@ -258,7 +258,7 @@ axs[0,0].set_title('Simulated Data', size=fontsize_2x2)
 handles, labels = axs[0,0].get_legend_handles_labels()
 axs[0,0].legend(handles=handles, labels=labels)
 
-max_df = max_df[max_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
+max_df = max_df[max_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
 
 axs[1,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=max_df, palette=palette, hue_order=sublinear_orders, ax=axs[1,0])
@@ -280,11 +280,11 @@ axs[0,1].legend(handles=handles, labels=labels)
 
 
 # max_df = max_df[max_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
-max_df = max_df[max_df['Method'].isin(['OWL', 'Huber Regression'])]
+max_df = max_df[max_df['Method'].isin(['OWL',  'OWL ($\epsilon$ known)', 'Huber Regression'])]
 
 
 axs[1,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
-sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=max_df, palette=palette, hue_order=['Huber Regression', 'OWL'], ax=axs[1,1])
+sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=max_df, palette=palette, hue_order=['Huber Regression', 'OWL ($\epsilon$ known)', 'OWL'], ax=axs[1,1])
 handles, labels = axs[1,1].get_legend_handles_labels()
 axs[1,1].legend(handles=handles, labels=labels)
 
@@ -315,7 +315,7 @@ axs[0,0].set_title('Simulated Data', size=fontsize_2x2)
 handles, labels = axs[0,0].get_legend_handles_labels()
 axs[0,0].legend(handles=handles, labels=labels)
 
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
+rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
 
 axs[1,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=rand_df, palette=palette, hue_order=sublinear_orders, ax=axs[1,0])
@@ -337,11 +337,11 @@ axs[0,1].legend(handles=handles, labels=labels)
 
 
 # rand_df = rand_df[rand_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
-rand_df = rand_df[rand_df['Method'].isin(['OWL',  'Huber Regression'])]
+rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'Huber Regression'])]
 
 
 axs[1,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
-sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=rand_df, palette=palette, hue_order=['Huber Regression', 'OWL'], ax=axs[1,1])
+sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=rand_df, palette=palette, hue_order=['Huber Regression', 'OWL ($\epsilon$ known)', 'OWL'], ax=axs[1,1])
 handles, labels = axs[1,1].get_legend_handles_labels()
 axs[1,1].legend(handles=handles, labels=labels)
 
@@ -379,8 +379,8 @@ handles, labels = axs[1,0].get_legend_handles_labels()
 axs[1,0].legend(handles=handles, labels=labels)
 
 
-max_df = max_df[max_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
+max_df = max_df[max_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
+rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
 
 axs[0,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=max_df, palette=palette, hue_order=sublinear_orders, ax=axs[0,1])
@@ -417,8 +417,8 @@ handles, labels = axs[1,2].get_legend_handles_labels()
 axs[1,2].legend(handles=handles, labels=labels)
 
 
-max_df = max_df[max_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'RANSAC MLE', 'Huber Regression'])]
+max_df = max_df[max_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
+rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL ($\epsilon$ known)', 'RANSAC MLE', 'Huber Regression'])]
 
 axs[0,3].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y=y, hue="Method", data=max_df, palette=palette, hue_order=sublinear_orders, ax=axs[0,3])
@@ -524,7 +524,10 @@ max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 axs[0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[0])
@@ -539,7 +542,10 @@ max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[1])
@@ -554,7 +560,10 @@ max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 axs[2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[2])
@@ -577,10 +586,13 @@ max_df, _ = load_results('results/gaussian/dim_2/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[0,0])
 axs[0,0].set_title('Dimension = 2', size=fontsize_2x3)
@@ -589,7 +601,7 @@ axs[0,0].set_ylabel("Mean Parameter MSE")
 axs[0,0].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[1,0])
 handles, labels = axs[1,0].get_legend_handles_labels()
@@ -601,10 +613,13 @@ max_df, _ = load_results('results/gaussian/dim_25/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[0,1])
 axs[0,1].set_title('Dimension = 25', size=fontsize_2x3)
@@ -613,7 +628,7 @@ axs[0,1].set_ylabel("Mean Parameter MSE")
 axs[0,1].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[1,1])
 handles, labels = axs[1,1].get_legend_handles_labels()
@@ -626,10 +641,13 @@ max_df, _ = load_results('results/gaussian/dim_50/')
 max_df = max_df[max_df['Corruption fraction']<=0.255]
 epsilons = np.unique(max_df['Corruption fraction'])
 uncmle = max_df[max_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-max_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+max_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+max_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[0,2])
 axs[0,2].set_title('Dimension = 50', size=fontsize_2x3)
@@ -638,7 +656,7 @@ axs[0,2].set_ylabel("Mean Parameter MSE")
 axs[0,2].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-max_df = max_df[max_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+max_df = max_df[max_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=max_df, palette=palette, ax=axs[1,2])
 handles, labels = axs[1,2].get_legend_handles_labels()
@@ -660,7 +678,11 @@ rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
+
 
 axs[0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[0])
@@ -675,7 +697,10 @@ rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 axs[1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[1])
@@ -690,7 +715,10 @@ rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
 rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized, adaptive)'])]
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 axs[2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[2])
@@ -713,10 +741,13 @@ _, rand_df = load_results('results/gaussian/dim_2/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[0,0])
 axs[0,0].set_title('Dimension = 2', size=fontsize_2x3)
@@ -725,7 +756,7 @@ axs[0,0].set_ylabel("Mean Parameter MSE")
 axs[0,0].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,0].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[1,0])
 handles, labels = axs[1,0].get_legend_handles_labels()
@@ -737,10 +768,13 @@ _, rand_df = load_results('results/gaussian/dim_25/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[0,1])
 axs[0,1].set_title('Dimension = 25', size=fontsize_2x3)
@@ -749,7 +783,7 @@ axs[0,1].set_ylabel("Mean Parameter MSE")
 axs[0,1].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,1].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[1,1])
 handles, labels = axs[1,1].get_legend_handles_labels()
@@ -762,10 +796,13 @@ _, rand_df = load_results('results/gaussian/dim_50/')
 rand_df = rand_df[rand_df['Corruption fraction']<=0.255]
 epsilons = np.unique(rand_df['Corruption fraction'])
 uncmle = rand_df[rand_df['Method']=="Uncorrupted MLE"]['Mean MSE'].median()
-rand_df.replace('OWL (Kernelized, adaptive)', 'OWL (Kernelized)', inplace=True)
+
+## Replace with correct names
+rand_df.replace('OWL (Kernelized, adaptive)', "OWL (Kernelized, $\epsilon$ known)", inplace=True)
+rand_df.replace('OWL', "OWL ($\epsilon$ known)", inplace=True)
 
 ## First plot with MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'MLE', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", 'MLE', "OWL (Kernelized, $\epsilon$ known)"])]
 axs[0,2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[0,2])
 axs[0,2].set_title('Dimension = 50', size=fontsize_2x3)
@@ -774,7 +811,7 @@ axs[0,2].set_ylabel("Mean Parameter MSE")
 axs[0,2].legend(handles=handles, labels=labels)
 
 ## Now without MLE
-rand_df = rand_df[rand_df['Method'].isin(['OWL', 'OWL (Kernelized)'])]
+rand_df = rand_df[rand_df['Method'].isin(["OWL ($\epsilon$ known)", "OWL (Kernelized, $\epsilon$ known)"])]
 axs[1,2].plot(epsilons, np.repeat(uncmle, len(epsilons)), color='black', linestyle='dashed', linewidth=2)
 sns.lineplot(x="Corruption fraction", y="Mean MSE", hue="Method", data=rand_df, palette=palette, ax=axs[1,2])
 handles, labels = axs[1,2].get_legend_handles_labels()
@@ -799,8 +836,18 @@ for f in fnames:
         l = pickle.load(io)
     results.extend(l)
 df = pd.DataFrame(results)
-
+df["epsilon"] = np.round(df["epsilon"], 2)
+df = df[df["epsilon"] <= 0.6]
 df["epsilon"] = pd.Categorical(df["epsilon"])
+
+
+best_dfs = []
+groupings = df.groupby(['K', 'epsilon']).indices
+for (K, epsilon), idx in groupings.items():
+    sub_df = df.iloc[idx]
+    best_dfs.append(sub_df[sub_df["KL divergence"] == sub_df["KL divergence"].min()].copy())
+df = pd.concat(best_dfs)
+
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 
@@ -828,7 +875,7 @@ for eps in lookup.keys():
 
 
 df_kndl = pd.DataFrame(res_kndl)
-curr_epsilons = [0.05, 0.2, 0.4, 0.6, 0.8]
+curr_epsilons = [0.05, 0.15, 0.25, 0.35, 0.45]
 df_curr = df_kndl[df_kndl["epsilon"].isin(curr_epsilons)]
 # df_curr = df_kndl
 df_curr["epsilon"] = pd.Categorical(df_curr["epsilon"])
@@ -851,20 +898,62 @@ pca = PCA(n_components=10)
 X_pca = pca.fit_transform(X_proc)
 ndata, _ = X_pca.shape
 
-kmeans_aris = []
+kmeans_ari = None
 seeds = list(range(100, 130))
+kmeans_score = -np.infty
 for seed in tqdm(seeds):
-    kmeans = KMeans(n_clusters=7, random_state=seed)
+    kmeans = KMeans(n_clusters=7, n_init=10, random_state=seed)
     kmeans.fit(X_pca)
-    kmeans_aris.append(adjusted_rand_score(groups_no_b, kmeans.labels_))
+    curr_score = kmeans.score(X_pca)
+    if curr_score > kmeans_score:
+        kmeans_score = curr_score
+        kmeans_ari = adjusted_rand_score(groups_no_b, kmeans.labels_)
 
-mle_aris = []
+mle_ari = None
+mle_ll = -np.infty
 for seed in tqdm(seeds):
     np.random.seed(seed)
     gmm = GeneralGMM(X=X_pca, K=7)
     gmm.fit_mle()
-    mle_aris.append(adjusted_rand_score(groups_no_b, gmm.z))
+    curr_ll = np.sum(gmm.log_likelihood())
+    if curr_ll > mle_ll:
+        mle_ll = curr_ll
+        mle_ari = adjusted_rand_score(groups_no_b, gmm.z)
 
+
+df_7 = (df[df["K"]==7].reset_index(drop=True)).sort_values("epsilon").copy()
+df_7["epsilon"] = pd.Categorical(df_7["epsilon"])
+df_7.rename(columns={"Adjusted Rand Index (subset)": "Adjusted Rand Index (inliers)", "Number of inliers":"Fraction of inliers"}, inplace=True)
+df_7["Fraction of inliers"] = df_7["Fraction of inliers"]/ndata
+
+plt.clf()
+fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
+
+sns.barplot(x="epsilon", y="Adjusted Rand Index", data=df_7, ax=axs[0])
+axs[0].tick_params(axis='x', labelrotation = 75)
+axs[0].axhline(y=kmeans_ari, c="tab:blue",linewidth=2.0, linestyle="--")
+axs[0].axhline(y=mle_ari, c="tab:orange",linewidth=2.0, linestyle="--")
+
+axs[0].text(0.9, 0.52, 'K-Means', c="tab:blue", horizontalalignment='center', verticalalignment='center', transform=axs[0].transAxes)
+axs[0].text(0.9, 0.86, 'MLE', c="tab:orange", horizontalalignment='center', verticalalignment='center', transform=axs[0].transAxes)
+
+
+axs[0].set_ylim([0.4, 1])
+
+
+sns.barplot(x="epsilon", y="Adjusted Rand Index (inliers)", data=df_7, ax=axs[1])
+axs[1].tick_params(axis='x', labelrotation = 75)
+# axs[1].xaxis.label.set_visible(False)
+axs[1].set_ylim([0.4, 1])
+
+sns.barplot(x="epsilon", y="Fraction of inliers", data=df_7, ax=axs[2])
+axs[2].tick_params(axis='x', labelrotation = 75)
+# axs[2].xaxis.label.set_visible(False)
+axs[2].set_ylim([0.4, 1])
+plt.tight_layout()
+plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
+
+'''
 
 
 df_7 = (df[df["K"]==7].reset_index(drop=True)).sort_values("epsilon")
@@ -880,6 +969,12 @@ for index, row in df_7.iterrows():
     results.append({"Method":meth, "Adjusted Rand Index": row["Adjusted Rand Index"]})
 
 df_comp = pd.DataFrame(results)
+
+fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
+
+methods = df_comp["Method"].unique()
+colors = sns.color_palette("husl", len(methods))
+palette = dict(zip(methods, colors))
 
 results =[]
 for index, row in df_7.iterrows():
@@ -912,4 +1007,4 @@ axs[2].set_ylim([0.4, 1])
 
 plt.tight_layout()
 plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
-
+'''

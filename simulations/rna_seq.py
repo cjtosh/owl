@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         ## Fit with OWL 
         l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
-        gmm_tv.fit_owl(l1_ball, admmsteps=5000, verbose=False)
+        gmm_tv.fit_owl(l1_ball, admmsteps=15000, verbose=False)
 
         ## Weighted log-likelihood
         ll_vec = gmm_tv.log_likelihood()
