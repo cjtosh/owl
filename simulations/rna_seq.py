@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     fname = os.path.join(folder, str(eps) + "_" + str(seed) + ".pkl")
     results = []
-    Ks = np.arange(2, 15)
+    Ks = np.arange(2, 13)
     for k in tqdm(Ks):
         ## Initialize GMM
         gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True, em_steps=50, repeats=5)
@@ -59,14 +59,18 @@ if __name__ == "__main__":
         probs = gmm_tv.w/np.sum(gmm_tv.w)
         kl = np.nansum(xlogy(probs , probs)) - np.dot(probs, ll_vec)
 
+        ## Projection value
+        proj_val = l1_ball.projection_value(probs)
+        
         ## Get inliers
         mask = (gmm_tv.w >= 1.0)
         num_inliers = np.sum(mask)
-
+        
         results.append({"K": k, 
                         "epsilon": eps, 
                         "Weighted Log-likelihood": wll,
                         "KL divergence": kl,
+                        "Projection value": proj_val,
                         "Number of inliers": num_inliers,
                         "Adjusted Rand Index": adjusted_rand_score(groups_no_b, gmm_tv.z),
                         "Adjusted Rand Index (with batches)":  adjusted_rand_score(groups, gmm_tv.z),
