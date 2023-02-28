@@ -45,11 +45,11 @@ if __name__ == "__main__":
     Ks = np.arange(2, 15)
     for k in tqdm(Ks):
         ## Initialize GMM
-        gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True, repeats=5)
+        gmm_tv = GeneralGMM(X=X_pca, K=k, hard=True, em_steps=50, repeats=5)
 
         ## Fit with OWL 
         l1_ball = L1Ball(n=X_pca.shape[0], r=eps)
-        gmm_tv.fit_owl(l1_ball, admmsteps=15000, verbose=False)
+        gmm_tv.fit_owl(l1_ball, admmsteps=20000, verbose=False)
 
         ## Weighted log-likelihood
         ll_vec = gmm_tv.log_likelihood()
