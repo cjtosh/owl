@@ -52,8 +52,8 @@ class OWLMixtureModel(OWLModel):
                 self.soft_M_step()
 
 
-    def owl_step(self, ball: ProbabilityBall, n_iters:int, kde: KDE, admmsteps:int, admmtol:float, eta:int, verbose:bool):
-        super().fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, eta=eta, verbose=verbose)
+    def owl_step(self, ball: ProbabilityBall, n_iters:int, kde: KDE, admmsteps:int, admmtol:float, thresh:float, eta:int, verbose:bool):
+        super().fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, thresh=thresh, eta=eta, verbose=verbose)
 
     def fit_owl(self, 
                 ball: ProbabilityBall, 
@@ -63,6 +63,7 @@ class OWLMixtureModel(OWLModel):
                 admmsteps: int = 1000, 
                 admmtol: float = 0.0001,
                 eta: float = 0.01,
+                thresh:float = 0.2,
                 verbose: bool = False, 
                 **kwargs):
         
@@ -78,7 +79,7 @@ class OWLMixtureModel(OWLModel):
                 kde.recalculate_kernel(bandwidth=bw)
             
             for _ in range(self.repeats):
-                self.owl_step(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, eta=eta, verbose=verbose)
+                self.owl_step(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, eta=eta, thresh=thresh, verbose=verbose)
                 prob = self.w/np.sum(self.w)
                 ll = np.dot(prob, self.log_likelihood()) - np.nansum(xlogy(prob , prob))
                 if ll > best_ll:

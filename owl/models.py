@@ -59,7 +59,8 @@ class OWLModel(object):
                 admmsteps:int=1000, 
                 admmtol:float=10e-5,
                 eta:float=0.01,
-                verbose:bool=False, 
+                verbose:bool=False,
+                thresh:float=0.2,
                 **kwargs):
         
         p = np.zeros(self.n)
@@ -71,7 +72,7 @@ class OWLModel(object):
             log_p_theta = self.log_likelihood(**kwargs)
 
             ## Solve for p
-            p = kl_minimization(log_q=log_p_theta, ball=ball, kde=kde, w_init=p, max_iter=admmsteps, eta=eta, adjust_eta=True, tol=admmtol)
+            p = kl_minimization(log_q=log_p_theta, ball=ball, kde=kde, w_init=p, max_iter=admmsteps, eta=eta, adjust_eta=True, thresh=thresh, tol=admmtol)
             p = np.clip(p, a_min=0.0, a_max=None)
 
             ## Normalize to sum to n
@@ -89,8 +90,9 @@ def p_owl_fit(model:OWLModel,
               admmsteps:int=1000, 
               admmtol:float=10e-5,
               eta:float=0.01,
+              thresh:float=0.2,
               **kwargs):
-    model.fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, eta=eta)
+    model.fit_owl(ball=ball, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol,thresh=thresh, eta=eta)
     prob = model.w/np.sum(model.w)
     val = np.dot(prob, model.log_likelihood()) - np.nansum(xlogy(prob , prob))
     return(model, -val)
@@ -104,6 +106,7 @@ def fit_owl(model:OWLModel,
             admmsteps:int=1000, 
             admmtol:float=10e-5,
             eta:float=0.01,
+            thresh:float=0.2,
             n_workers:int=1,
             percentile:float=90,
             return_all:bool=False,
@@ -123,7 +126,7 @@ def fit_owl(model:OWLModel,
         models.append(m)
 
     pfit = delayed(p_owl_fit)
-    jobs = (pfit(model=m, ball=b, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, eta=eta) for m, b in zip(models, balls))
+    jobs = (pfit(model=m, ball=b, n_iters=n_iters, kde=kde, admmsteps=admmsteps, admmtol=admmtol, thresh=thresh, eta=eta) for m, b in zip(models, balls))
     result = prun(jobs, n_workers)
 
     models = []
