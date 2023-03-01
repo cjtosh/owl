@@ -16,7 +16,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
 
-    epsilons = np.linspace(0.05, 0.6, 12)
+    # epsilons = np.linspace(0.05, 0.6, 12)
+    epsilons = np.linspace(0.05, 0.95, 10)
     neps = len(epsilons)
 
     args = parser.parse_args()
