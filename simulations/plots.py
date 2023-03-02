@@ -837,7 +837,6 @@ for f in fnames:
     results.extend(l)
 df = pd.DataFrame(results)
 df["epsilon"] = np.round(df["epsilon"], 2)
-df = df[df["epsilon"] <= 0.6]
 df["epsilon"] = pd.Categorical(df["epsilon"])
 
 
@@ -851,8 +850,9 @@ df = pd.concat(best_dfs)
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 
-sns.lineplot(x='K', y='Weighted Log-likelihood', hue="epsilon",  data=df, ax=axs[0])
+g = sns.lineplot(x='K', y='Weighted Log-likelihood', hue="epsilon",  data=df, ax=axs[0])
 axs[0].set_xlabel('Number of clusters')
+sns.move_legend(g, "lower right")
 
 mean_df = df.groupby(['epsilon', 'K']).mean().reset_index()
 epsilons = mean_df['epsilon'].unique()
@@ -875,7 +875,7 @@ for eps in lookup.keys():
 
 
 df_kndl = pd.DataFrame(res_kndl)
-curr_epsilons = [0.05, 0.15, 0.25, 0.35, 0.45]
+curr_epsilons = [0.05, 0.25, 0.45, 0.65, 0.85]
 df_curr = df_kndl[df_kndl["epsilon"].isin(curr_epsilons)]
 # df_curr = df_kndl
 df_curr["epsilon"] = pd.Categorical(df_curr["epsilon"])
@@ -899,7 +899,7 @@ X_pca = pca.fit_transform(X_proc)
 ndata, _ = X_pca.shape
 
 kmeans_ari = None
-seeds = list(range(100, 130))
+seeds = list(range(101, 116)) ## Same seeds as run in the OWL setup
 kmeans_score = -np.infty
 for seed in tqdm(seeds):
     kmeans = KMeans(n_clusters=7, n_init=10, random_state=seed)
@@ -952,59 +952,3 @@ axs[2].tick_params(axis='x', labelrotation = 75)
 axs[2].set_ylim([0.4, 1])
 plt.tight_layout()
 plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
-
-'''
-
-
-df_7 = (df[df["K"]==7].reset_index(drop=True)).sort_values("epsilon")
-results = []
-for v in kmeans_aris:
-    results.append({"Method":"K-Means", "Adjusted Rand Index": v})
-    
-for v in mle_aris:
-    results.append({"Method":"MLE", "Adjusted Rand Index": v})
-    
-for index, row in df_7.iterrows():
-    meth = "OWL (" + chr(949) + "=" + str(row["epsilon"]) + ")"
-    results.append({"Method":meth, "Adjusted Rand Index": row["Adjusted Rand Index"]})
-
-df_comp = pd.DataFrame(results)
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
-
-methods = df_comp["Method"].unique()
-colors = sns.color_palette("husl", len(methods))
-palette = dict(zip(methods, colors))
-
-results =[]
-for index, row in df_7.iterrows():
-    meth = "OWL (" + chr(949) + "=" + str(row["epsilon"]) + ")"
-    results.append({"Method":meth, "Adjusted Rand Index (inliers)": row["Adjusted Rand Index (subset)"], "Fraction of inliers": (row["Number of inliers"]/ndata ) })
-
-df_owl = pd.DataFrame(results)
-
-methods = df_comp["Method"].unique()
-colors = sns.color_palette("husl", len(methods))
-palette = dict(zip(methods, colors))
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
-
-sns.barplot(x="Method", y="Adjusted Rand Index", data=df_comp,palette=palette, ax=axs[0])
-axs[0].tick_params(axis='x', labelrotation = 75)
-axs[0].xaxis.label.set_visible(False)
-axs[0].set_ylim([0.4, 1])
-
-
-sns.barplot(x="Method", y="Adjusted Rand Index (inliers)", data=df_owl,palette=palette, ax=axs[1])
-axs[1].tick_params(axis='x', labelrotation = 75)
-axs[1].xaxis.label.set_visible(False)
-axs[1].set_ylim([0.4, 1])
-
-sns.barplot(x="Method", y="Fraction of inliers", data=df_owl, palette=palette, ax=axs[2])
-axs[2].tick_params(axis='x', labelrotation = 75)
-axs[2].xaxis.label.set_visible(False)
-axs[2].set_ylim([0.4, 1])
-
-plt.tight_layout()
-plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
-'''
