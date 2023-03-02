@@ -853,6 +853,7 @@ fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 g = sns.lineplot(x='K', y='Weighted Log-likelihood', hue="epsilon",  data=df, ax=axs[0])
 axs[0].set_xlabel('Number of clusters')
 sns.move_legend(g, "lower right")
+g.legend_.set_title('OWL $\ell_1$ radius ($\epsilon$)')
 
 mean_df = df.groupby(['epsilon', 'K']).mean().reset_index()
 epsilons = mean_df['epsilon'].unique()
@@ -879,9 +880,9 @@ curr_epsilons = [0.05, 0.25, 0.45, 0.65, 0.85]
 df_curr = df_kndl[df_kndl["epsilon"].isin(curr_epsilons)]
 # df_curr = df_kndl
 df_curr["epsilon"] = pd.Categorical(df_curr["epsilon"])
-sns.lineplot(x="K", y="Normalized differences", hue="epsilon", data=df_curr, ax=axs[1])
+g = sns.lineplot(x="K", y="Normalized differences", hue="epsilon", data=df_curr, ax=axs[1])
 axs[1].set_xlabel('Number of clusters')
-
+g.legend_.set_title('OWL $\ell_1$ radius ($\epsilon$)')
 
 plt.tight_layout()
 plt.savefig('figures/rna_elbow.pdf', bbox_inches='tight')
@@ -931,6 +932,7 @@ fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 
 sns.barplot(x="epsilon", y="Adjusted Rand Index", data=df_7, ax=axs[0])
 axs[0].tick_params(axis='x', labelrotation = 75)
+axs[0].set_xlabel('OWL $\ell_1$ radius ($\epsilon$)')
 axs[0].axhline(y=kmeans_ari, c="tab:blue",linewidth=2.0, linestyle="--")
 axs[0].axhline(y=mle_ari, c="tab:orange",linewidth=2.0, linestyle="--")
 
@@ -943,12 +945,12 @@ axs[0].set_ylim([0.4, 1])
 
 sns.barplot(x="epsilon", y="Adjusted Rand Index (inliers)", data=df_7, ax=axs[1])
 axs[1].tick_params(axis='x', labelrotation = 75)
-# axs[1].xaxis.label.set_visible(False)
+axs[1].set_xlabel('OWL $\ell_1$ radius ($\epsilon$)')
 axs[1].set_ylim([0.4, 1])
 
 sns.barplot(x="epsilon", y="Fraction of inliers", data=df_7, ax=axs[2])
 axs[2].tick_params(axis='x', labelrotation = 75)
-# axs[2].xaxis.label.set_visible(False)
+axs[2].set_xlabel('OWL $\ell_1$ radius ($\epsilon$)')
 axs[2].set_ylim([0.4, 1])
 plt.tight_layout()
 plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
