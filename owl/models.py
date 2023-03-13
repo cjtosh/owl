@@ -6,8 +6,6 @@ from owl.i_projection import kl_minimization
 from tqdm import trange
 from copy import deepcopy
 from joblib import Parallel, delayed
-from kneed import KneeLocator
-from scipy.signal import savgol_filter
 from scipy.special import xlogy
 
 ## Parallel run
