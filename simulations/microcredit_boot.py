@@ -11,7 +11,7 @@ from time import time
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
-    parser.add_argument('--i', type=int, default=1, help="The random seed.")
+    parser.add_argument('--i', type=int, default=1, help="The argument that determines seed + epsilon.")
 
     start = time()
     ADMMSTEPS = 20000
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     ball = L1Ball(n=n, r=(2*eps))
     slm.fit_owl(ball=ball,admmsteps=ADMMSTEPS, eta=1e-7, admmtol=1e-15, thresh=0.0)
-    l1_ate = slm.clf.coef_[0]
+    owl_ate = slm.clf.coef_[0]
 
     prob = slm.w/np.sum(slm.w)
     okl = np.nansum(xlogy(prob , prob)) - np.dot(prob, slm.log_likelihood())
@@ -69,7 +69,7 @@ if __name__ == "__main__":
               "Epsilon":eps, 
               "Observed epsilon":obs_eps, 
               "MLE ATE":mle_ate, 
-              "OWL ATE":l1_ate, 
+              "OWL ATE":owl_ate, 
               "OKL estimate":okl}
 
     end = time()

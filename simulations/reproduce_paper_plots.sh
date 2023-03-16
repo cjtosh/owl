@@ -50,4 +50,13 @@ do
     python simulations/rna_seq.py --seed $i
 done 
 
+
+## Microcredit experiments
+python simulations/microcredit_initial.py
+
+for i in {1..2500}
+do
+    python simulations/microcredit_boot.py --i $i
+done
+
 python simulations/plots.py

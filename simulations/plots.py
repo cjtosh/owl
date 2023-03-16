@@ -954,3 +954,145 @@ axs[2].set_xlabel('OWL $\ell_1$ radius ($\epsilon$)')
 axs[2].set_ylim([0.4, 1])
 plt.tight_layout()
 plt.savefig("figures/ari_comp.pdf", bbox_inches='tight')
+
+
+
+## Micrcredit plots
+def filter_monotone(arr):
+    idx = [0]
+    for i in range(1, len(arr)):
+        val = arr[i]
+        if val > arr[idx[-1]]:
+            idx.append(i)
+    return(np.array(idx))
+
+def curvature(x, y):
+    deriv_1 = np.gradient(y, x)
+    deriv_2 = np.gradient(deriv_1, x)
+    curv = deriv_2/np.power(1+ np.square(deriv_1), 1.5)
+    return(curv)
+
+
+micro_folder = '../results/microcredit/'
+files = [fname for fname in os.listdir(micro_folder) if fname.endswith('.pkl')]
+results = []
+for fname in files:
+    with open(os.path.join(micro_folder, fname), 'rb') as io:
+        r = pickle.load(io)
+    results.append(r)
+
+df = pd.DataFrame(results)
+mean_df = df.groupby(['seed']).mean().reset_index()
+for _, row in mean_df.iterrows():
+    results.append({"seed":row['seed'], "Epsilon":0.0, "Observed epsilon": 0.0, "OWL ATE": row['MLE ATE']})
+
+
+boot_df = pd.DataFrame(results)
+boot_df.sort_values(by=['seed', "Epsilon"], inplace=True)
+boot_df.drop(columns="MLE ATE", inplace=True)
+boot_df.reset_index(drop=True, inplace=True)
+
+orig_df = pd.read_csv(os.path.join(micro_folder, "owl_original.csv"))
+
+## Filter for monotonicity on original df
+orig_idx = filter_monotone(orig_df['Observed epsilon'].values)
+sub_orig_df = orig_df.iloc[orig_idx]
+sub_orig_df = sub_orig_df[sub_orig_df['Epsilon']!=0.0].copy()
+sub_orig_df['Smoothed OKL estimate'] = np.minimum.accumulate(sub_orig_df['OKL estimate'].values)
+sub_orig_df['Curvature'] = curvature(x=sub_orig_df['Epsilon'].values, y=sub_orig_df['Smoothed OKL estimate'].values)
+max_curv_orig_df = sub_orig_df.loc[sub_orig_df["Curvature"].idxmax()]
+
+
+## Filter for monotonicity on bootstrapped df
+idx_list = []
+groupings = boot_df.groupby(['seed']).indices
+for idx in groupings.values():
+    sub_df = boot_df.iloc[idx].sort_values(by="Epsilon")
+    sub_idx = filter_monotone(sub_df['Observed epsilon'].values)
+    idx_list.append(idx[sub_idx])
+boot_idx = np.concatenate(idx_list)
+
+
+sub_boot_df = boot_df.iloc[boot_idx]
+sub_boot_df = sub_boot_df[sub_boot_df['Epsilon']!=0.0].copy()
+groupings = sub_boot_df.groupby(['seed']).indices
+all_okls = []
+all_curvs = []
+for idx in groupings.values():
+    sub_df = sub_boot_df.iloc[idx].sort_values(by="Epsilon")
+    okl_val = np.minimum.accumulate(sub_df['OKL estimate'].values)
+    all_okls.append(okl_val)
+    all_curvs.append(curvature(x=sub_df['Epsilon'].values, y=okl_val))
+    
+sub_boot_df['Smoothed OKL estimate'] = np.concatenate(all_okls)
+sub_boot_df['Curvature'] = np.concatenate(all_curvs)
+
+max_curv_boot_df = sub_boot_df.loc[sub_boot_df.groupby('seed')["Curvature"].idxmax()]
+
+
+## ATE v.s. Epsilon
+temp_boot_df = boot_df.copy()
+temp_orig_df = orig_df.copy()
+
+temp_boot_df.loc[temp_boot_df['Epsilon']==0, 'Epsilon'] = 1e-5
+temp_orig_df.loc[temp_orig_df['Epsilon']==0, 'Epsilon'] = 1e-5
+
+plt.clf()
+sns.lineplot(data=temp_boot_df.iloc[boot_idx], x="Epsilon", y="OWL ATE", errorbar=None)
+
+
+A = temp_boot_df.groupby('Epsilon').quantile(0.05).reset_index()
+q_low = A['OWL ATE'].values
+x = A['Epsilon'].values
+
+q_high = temp_boot_df.groupby('Epsilon').quantile(0.95).reset_index()['OWL ATE'].values
+
+plt.fill_between(x, q_low, q_high, alpha=0.2, color='tab:blue')
+sns.scatterplot(data=temp_orig_df.iloc[orig_idx], x="Epsilon", y="OWL ATE", color="tab:orange")
+plt.ylabel('ATE on profit (USD PPP/fortnight)', fontsize=12)
+plt.axvline(max_curv_orig_df['Epsilon'], color="tab:orange") ## Epsilon of original
+
+plt.xlabel("TV constraint ($\epsilon$)", fontsize=12)
+plt.savefig("../figures/micro_ate_linear.pdf", bbox_inches='tight')
+
+
+plt.xscale('log')
+plt.xticks(ticks=[1e-5, 1e-4,1e-3, 1e-2, 1e-1 ], labels=["$0$", "$10^{-4}$", "$10^{-3}$","$10^{-2}$", "$10^{-1}$" ])
+plt.savefig("../figures/micro_ate_log.pdf", bbox_inches='tight')
+
+
+## OKL estimate v.s. epsilon
+plt.clf()
+sns.scatterplot(data=sub_orig_df, x='Epsilon', y='Smoothed OKL estimate', color="tab:orange")
+sns.lineplot(data=sub_boot_df, x="Epsilon", y='Smoothed OKL estimate', errorbar=None)
+
+A = sub_boot_df.groupby('Epsilon').quantile(0.05).reset_index()
+q_low = A['Smoothed OKL estimate'].values
+x = A['Epsilon'].values
+
+q_high = sub_boot_df.groupby('Epsilon').quantile(0.95).reset_index()['Smoothed OKL estimate'].values
+
+plt.fill_between(x, q_low, q_high, alpha=0.2, color='tab:blue')
+plt.axvline(max_curv_orig_df['Epsilon'], color="tab:orange") ## Epsilon of original
+
+plt.xlabel("TV constraint ($\epsilon$)", fontsize=12)
+plt.ylabel("Minimum OKL estimate", fontsize=12)
+plt.savefig("../figures/micro_okl_linear.pdf", bbox_inches='tight')
+
+
+plt.xscale("log")
+plt.savefig("../figures/micro_okl_log.pdf", bbox_inches='tight')
+
+
+## Plot inliers and outliers
+plt.clf()
+X = pd.read_csv("../data/microcredit.csv")
+X['val'] = X['profit']
+
+_, bins, _ = plt.hist(X[X['weight']<1]['val'], bins=50, alpha=0.5, color='tab:blue', density=True, label='Outliers')
+plt.hist(X[X['weight']>1]['val'], bins=bins, alpha=0.5, color='tab:orange', density=True, label='Inliers')
+
+plt.legend()
+plt.xlabel("Household profit (USD PPP/Fortnite)")
+plt.ylabel("Density")
+plt.savefig("../figures/hist.pdf", bbox_inches='tight')
