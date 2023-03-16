@@ -64,3 +64,15 @@ owl = Exponential(X=x)
 l1ball = L1Ball(n=n, r=epsilon)
 owl.fit_owl(ball=l1ball, n_iters=10, verbose=True)
 ```
+
+More examples are in the `examples/Simple OWL models.ipynb` notebook.
+
+## Citation
+
+If you use this code, please cite the [preprint]( missing ):
+
+```
+Robustifying likelihoods by optimistically re-weighting data
+M. Dewaskar, C.Tosh, J. Knoblauch, and D. Dunson
+blank
+```
