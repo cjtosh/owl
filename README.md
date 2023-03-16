@@ -12,7 +12,7 @@ conda activate owl
 pip install -e .
 ```
 
-Otherwise, you should install the packages listed in `env.yaml`.
+Otherwise, you should install the packages listed in `env.yaml` before running `pip install -e .`.
 
 ## Running OWL
 
