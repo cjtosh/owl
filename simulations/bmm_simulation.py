@@ -1,13 +1,14 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from bmm import BernoulliMM
-from balls_kdes import ProbabilityBall
-from cmodels import fit_mle, fit_owl
+from owl.models import fit_owl
+from owl.mixture_models import BernoulliMM
+from owl.ball import L1Ball
 import os, sys
 import pickle
+from tqdm import tqdm
 
-ADMMSTEPS=1000
+ADMMSTEPS=5000
 
 '''
     This script implements a Bernoulli mixture model simulation.
@@ -34,7 +35,6 @@ def obs_coocur(X, w=None):
 
 def simulated_bmm_data(n, K, p, alpha=0.1, beta=0.1):
     lam = np.random.beta(a=alpha, b=beta, size=(K, p))
-#     pi = np.random.dirichlet(np.ones(K))
     pi = np.ones(K)/K
     z = np.random.choice(K, size=n, replace=True, p=pi)
     X = np.empty((n,p), dtype=int)
@@ -59,11 +59,19 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     results = []
     n_corrupt = int(epsilon*n)
     
-    bmm = BernoulliMM(X=X, K=K, hard=False)
-    mle = fit_mle(model=bmm)
+    mle = BernoulliMM(X=X, K=K, repeats=100, hard=False)
+    mle.fit_mle()
 
+    ## Evaluate uncorrupted MLE
+    l1_dist = mle.mean_mae(lam)
+
+    results.append({"Method": "Uncorrupted MLE", 
+                    "Corruption fraction": epsilon, 
+                    "Parameter L1 distance": l1_dist,
+                    "Corruption type": corr_type})
+    
     if corr_type=='max':
-        lls = mle.log_likelihood_vector() ## Get likelihood values
+        lls = mle.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
@@ -74,52 +82,45 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
     for i in inds_corrupt:
         X[i] = corrupt(X[i])
     
-    corrupt_mask = np.isin(np.arange(n), inds_corrupt)
-    uncorrupt_mask = ~corrupt_mask
-
-    ## Evaluate uncorrupted MLE
-    cooccur_dist = mle.cooccurrence_distance(true_C)
-    l1_dist = mle.mean_mae(lam)
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
-
-    print("Uncorrupted MLE l1 dist:", l1_dist, file=sys.stderr)
-    print("Uncorrupted MLE Coccurrence dist:", cooccur_dist, file=sys.stderr)
-    
-    results.append({"Method": "Uncorrupted MLE", 
-                    "Corruption fraction": epsilon, 
-                    "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
-                    "Corruption type": corr_type})
 
     ## Regular MLE
-    bmm = BernoulliMM(X=X, K=K, hard=False)
-    mle = fit_mle(model=bmm)
-    cooccur_dist = mle.cooccurrence_distance(true_C)
+    mle = BernoulliMM(X=X, K=K, repeats=100, hard=False)
+    mle.fit_mle()
     l1_dist = mle.mean_mae(lam)
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
 
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type})
 
-    ## TV OWL
+    ## OWL with TV dist (Search for radius)
     bmm = BernoulliMM(X=X, K=K, hard=True)
-    tv_ball = ProbabilityBall(dist_type='l1', n=n, r=epsilon)
-    owl_tv = fit_owl(bmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
-    cooccur_dist = owl_tv.cooccurrence_distance(true_C)
+    l1_ball = L1Ball(n=n, r=1.0)
+    owl_tv = fit_owl(bmm, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
+                     admmsteps=ADMMSTEPS,
+                     n_workers=6)
+    
     l1_dist = owl_tv.mean_mae(lam)
-    ari = owl_tv.adjusted_rand_index(z, uncorrupt_mask)
 
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
-                    "Co-occurrence L1 distance": cooccur_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type})
+    
+    
+    ## OWL with TV dist (known radius)
+    owl_tv = BernoulliMM(X=X, K=K, hard=True)
+    l1_ball = L1Ball(n=n, r=2*epsilon)
+    owl_tv.fit_owl(l1_ball, admmsteps=ADMMSTEPS)
+    l1_dist = owl_tv.mean_mae(lam)
+
+    results.append({"Method": "OWL ($\epsilon$ known)", 
+                    "Corruption fraction": epsilon, 
+                    "Parameter L1 distance": l1_dist,
+                    "Corruption type": corr_type})
+
 
     return(results)
 
@@ -147,7 +148,7 @@ if __name__ == "__main__":
         
     full_results = []
 
-    for epsilon in epsilons:
+    for epsilon in tqdm(epsilons):
         results = simulation(X_=X, K=K, epsilon=epsilon, corr_type=corr_type, true_C=true_C, z_=z, lam_=lam)
         full_results.extend(results)
 

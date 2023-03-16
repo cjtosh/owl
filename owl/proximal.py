@@ -176,3 +176,6 @@ class ProxMMDBall(ProximalOperator):
         result, x = proj_ellipsoid(c=(z + y*eta), mu=self.center, Q=self.Q, L=self.eigL, T=100, r=self.r, xinit=self.xinit)
         self.xinit = x
         return(result)
+
+
+        

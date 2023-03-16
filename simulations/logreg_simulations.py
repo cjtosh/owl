@@ -4,12 +4,16 @@ import numpy as np
 from scipy.special import expit
 from scipy.io import loadmat
 import argparse
-from regression import LogisticRegression
+from tqdm import tqdm
+from owl.models import fit_owl
+from owl.regression import LogisticRegression
 from sklearn.linear_model import LogisticRegressionCV, RANSACRegressor
 from sklearn.linear_model import LogisticRegression as LogReg
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from balls_kdes import ProbabilityBall
+from owl.ball import L1Ball
+
+ADMMSTEPS = 5000
 
 
 def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_test_:np.ndarray, y_test_:np.ndarray, epsilon, corr_type):
@@ -22,7 +26,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
     n_train, p = X_train.shape
     n_corrupt = int(epsilon*n_train)
     lr = LogisticRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
     train_acc = np.mean(lr.predict(X_train) == y_train)
     test_acc = np.mean(lr.predict(X_test) == y_test)
     results.append({"Method": "Uncorrupted MLE", 
@@ -32,7 +36,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption type": corr_type})
 
     if corr_type=='max':
-        lls = lr.log_likelihood_vector() ## Get likelihood values
+        lls = lr.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n_train, size=n_corrupt, replace=False)
@@ -40,7 +44,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
 
     ## MLE
     lr = LogisticRegression(X=X_train, y=y_train)
-    lr.EM_step()
+    lr.maximize_weighted_likelihood()
     train_acc = np.mean(lr.predict(X_train) == y_train)
     test_acc = np.mean(lr.predict(X_test) == y_test)
     results.append({"Method": "MLE", 
@@ -49,14 +53,33 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Train accuracy": train_acc,
                     "Corruption type": corr_type})
     
-    ## Robust logistic regression   
+    ## OWL with TV distance (search for radius)  
     rob_lr = LogisticRegression(X=X_train, y=y_train)
-    l1_ball = ProbabilityBall(n=n_train, dist_type='l1', r=2*epsilon)
-    rob_lr.am_robust(ball=l1_ball, n_iters=10)
+    l1_ball = L1Ball(n=n_train, r=1.0)
+    rob_lr = fit_owl(rob_lr, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
+                     admmsteps=ADMMSTEPS,
+                     n_workers=4)
     
     train_acc = np.mean( rob_lr.predict(X_train) == y_train)
     test_acc = np.mean( rob_lr.predict(X_test) == y_test)
     results.append({"Method": "OWL (TV)", 
+                    "Corruption fraction": epsilon, 
+                    "Test accuracy": test_acc,
+                    "Train accuracy": train_acc,
+                    "Corruption type": corr_type})
+    
+
+    ## OWL with TV distance (known radius)
+    rob_lr = LogisticRegression(X=X_train, y=y_train)
+    l1_ball = L1Ball(n=n_train, r=2*epsilon)
+    rob_lr.fit_owl(ball=l1_ball, admmsteps=ADMMSTEPS)
+
+    
+    train_acc = np.mean( rob_lr.predict(X_train) == y_train)
+    test_acc = np.mean( rob_lr.predict(X_test) == y_test)
+    results.append({"Method": "OWL ($\epsilon$ known)", 
                     "Corruption fraction": epsilon, 
                     "Test accuracy": test_acc,
                     "Train accuracy": train_acc,
@@ -81,7 +104,7 @@ def logreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
                     "Corruption type": corr_type})
 
     ## RANSAC regression
-    clf = RANSACRegressor(estimator=LogReg(penalty='none'), min_samples=(1-2*epsilon), max_trials=50)
+    clf = RANSACRegressor(estimator=LogReg(penalty=None), min_samples=(1-2*epsilon), max_trials=50)
     clf.fit(X=X_scale, y=y_train)
     train_acc = np.mean( clf.predict(X_scale) == y_train)
     test_acc = np.mean( clf.predict(X_test_scale) == y_test)
@@ -154,7 +177,7 @@ if __name__ == "__main__":
         X_test = pca.transform(X[~train_mask])
     elif args.dataset=='random':
         stdv = 2.0
-        n = 1000
+        n = 5000
         p = 10
         w = stdv*np.random.randn(p)
 
@@ -167,7 +190,8 @@ if __name__ == "__main__":
         y_test = (np.dot(X_test, w) > 0).astype(int)
 
     full_results = []
-    for epsilon in np.linspace(start=0.01, stop=0.25, num=10):
+    epsilons =  np.linspace(start=0.01, stop=0.25, num=10)
+    for epsilon in tqdm(epsilons):
         results = logreg_corruption_comparison(X_train, y_train, X_test, y_test, epsilon, corr_type)
         full_results.extend(results)
 

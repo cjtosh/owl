@@ -4,8 +4,9 @@ import numpy as np
 import argparse
 import scipy.stats as stats
 from scipy.special import xlogy
-from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
-from gaussian import Gaussian
+from owl.ball import L1Ball
+from owl.kde import RBFKDE, knn_bandwidth
+from owl.gaussian import Gaussian
 from tqdm import tqdm
 
 
@@ -20,18 +21,16 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     X = g.X.copy()
     n_corrupt = int(epsilon*n)
 
-    g.EM_step()
-    hell_dist = g.hellinger(mu, cov)
+    g.maximize_weighted_likelihood()
     mu_dist = np.mean(np.square(mu - g.mu ))
 
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
 
     if corr_type=='max':
-        lls = g.log_likelihood_vector() ## Get likelihood values
+        lls = g.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
@@ -42,25 +41,21 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
 
     ## MLE
     g = Gaussian(X=X)
-    g.EM_step()
-    hell_dist = g.hellinger(mu, cov)
+    g.maximize_weighted_likelihood()
     mu_dist = np.mean(np.square(mu - g.mu ))
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
 
     ## OWL - TV
     g = Gaussian(X=X)
-    l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
-    g.am_robust(ball=l1_ball, n_iters=10)
-    hell_dist = g.hellinger(mu, cov)
+    tv_ball = L1Ball(n=n, r=2*epsilon)
+    g.fit_owl(ball=tv_ball, n_iters=10)
     mu_dist = np.mean(np.square(mu - g.mu ))
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist,
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
@@ -71,29 +66,25 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
     mu_dist_sel = None
     for k in [5, 10, 25, 50]:
         g = Gaussian(X=X)
-        l1_ball = ProbabilityBall(n=n, dist_type='l1', r=2*epsilon)
+        tv_ball = L1Ball(n=n, r=2*epsilon)
         bandwidth = knn_bandwidth(X, k)
-        kde = KDE(X, bandwidth)
-        g.am_robust(ball=l1_ball, n_iters=10, kde=kde)
+        kde = RBFKDE(X, bandwidth)
+        g.fit_owl(ball=tv_ball, n_iters=10, kde=kde)
         prob = g.w/np.sum(g.w)
-        ll = np.dot(prob, g.log_likelihood_vector()) - np.nansum(xlogy(prob , prob))
-        hell_dist = g.hellinger(mu, cov)
+        ll = np.dot(prob, g.log_likelihood()) - np.nansum(xlogy(prob , prob))
         mu_dist = np.mean(np.square(mu - g.mu ))
 
         
         results.append({"Method": "OWL (Kernelized, k=" + str(k) + ")", 
                         "Corruption fraction": epsilon, 
-                        "Hellinger distance": hell_dist,
                         "Mean MSE": mu_dist,
                         "Corruption type": corr_type})
         if ll > best_ll:
             best_ll = ll
-            hell_dist_sel = hell_dist
             mu_dist_sel = mu_dist
 
     results.append({"Method": "OWL (Kernelized, adaptive)", 
                     "Corruption fraction": epsilon, 
-                    "Hellinger distance": hell_dist_sel,
                     "Mean MSE": mu_dist_sel,
                     "Corruption type": corr_type})
 
@@ -106,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
     parser.add_argument('--scale', type=float, default=5.0, help="The scale of corruption.")
-    parser.add_argument('--dim', type=int, default=1, help="The dimension of the problem.")
+    parser.add_argument('--dim', type=int, default=2, help="The dimension of the problem.")
     parser.add_argument('--n', type=int, default=100, help="The number of data points.")
     parser.add_argument('--corr_type', type=str, default='max', help="The type of corruption.")
 
@@ -127,7 +118,8 @@ if __name__ == "__main__":
     X = stats.multivariate_normal.rvs(mean=mu, cov=cov, size=n, random_state=None)
 
     full_results = []
-    for epsilon in tqdm(np.linspace(start=0.01, stop=0.5, num=15)):
+    epsilons = np.linspace(start=0.01, stop=0.5, num=15)
+    for epsilon in tqdm(epsilons):
         results = gaussian_corruption_comparison(X, mu, cov, epsilon, scale, corr_type)
         full_results.extend(results)
         with open(fname, 'wb') as io:

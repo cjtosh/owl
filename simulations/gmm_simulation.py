@@ -1,12 +1,13 @@
 import numpy as np
 import argparse
 from copy import deepcopy
-from spherical_gmm import SphericalGMM
-from cmodels import fit_mle, fit_owl, fit_kernelized_owl
-from balls_kdes import ProbabilityBall, KDE, knn_bandwidth
-import os, sys
-import pickle
+from owl.models import fit_owl
+from owl.mixture_models import SphericalGMM
+from owl.ball import L1Ball
 from tqdm import tqdm
+import os
+import pickle
+
 
 ADMMSTEPS = 5000
 
@@ -34,90 +35,69 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     results = []
     n_corrupt = int(epsilon*n)
     
-    gmm = SphericalGMM(X, K=K, hard=False)
-
     ## Fit a MLE
-    mle = fit_mle(gmm)
-
+    mle = SphericalGMM(X, K=K, repeats=100, hard=False)
+    mle.fit_mle()
+    
     ## Uncorrupted distances
     mean_dist = mle.mean_mse(mu)
-    hell_dist = mle.hellinger_distance(mu, tau)
-
-    # print("Uncorrupted MLE mean dist:", mean_dist, file=sys.stderr)
-    # print("Uncorrupted MLE Hellinger dist:", hell_dist, file=sys.stderr)
-
+    
+    ## Corrupt the data
     if corr_type=='max':
-        lls = mle.log_likelihood_vector() ## Get likelihood values
+        lls = mle.log_likelihood() ## Get likelihood values
         inds_corrupt = np.argsort(-lls)[:n_corrupt] ## Corrupt largest indices
     else:
         inds_corrupt = np.random.choice(n, size=n_corrupt, replace=False)
 
-    # print("Number of corruptions:", len(inds_corrupt))
-    # print("Fraction of corruptions:", len(inds_corrupt)/len(z))
     for i in inds_corrupt:
         idxs = np.random.choice(p, size=int(0.5*p), replace=False)
         X[i][idxs] = corr_scale*np.random.choice([-1., 1.], size=len(idxs), replace=True)
-    
-    
-    corrupt_mask = np.isin(np.arange(n), inds_corrupt)
-    uncorrupt_mask = ~corrupt_mask
 
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
     results.append({"Method": "Uncorrupted MLE", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
-                    "Hellinger distance": hell_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
 
     ## MLE on corrupted data
-    gmm = SphericalGMM(X, K=K, hard=False)
-
-    mle = fit_mle(gmm)
+    mle = SphericalGMM(X, K=K, repeats=100, hard=False)
+    mle.fit_mle()
     mean_dist = mle.mean_mse(mu)
-    hell_dist = mle.hellinger_distance(mu, tau)
-    ari = mle.adjusted_rand_index(z, uncorrupt_mask)
 
     results.append({"Method": "MLE", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
-                    "Hellinger distance": hell_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
 
-    ## OWL with TV dist
+
+
+    ## OWL with TV dist (Search for radius)
     gmm = SphericalGMM(X, K=K, hard=True)
-    tv_ball = ProbabilityBall(dist_type='l1', n=n, r=epsilon)
-    owl_tv = fit_owl(gmm, tv_ball, admmsteps=ADMMSTEPS, verbose=False)
-
+    l1_ball = L1Ball(n=n, r=1.0)
+    owl_tv = fit_owl(gmm, 
+                     l1_ball, 
+                     epsilons=np.linspace(0.01, 0.5, 20), 
+                     admmsteps=ADMMSTEPS,
+                     n_workers=6)
     mean_dist = owl_tv.mean_mse(mu)
-    hell_dist = owl_tv.hellinger_distance(mu, tau)
-    ari = owl_tv.adjusted_rand_index(z, uncorrupt_mask)
-
+    
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
-                    "Hellinger distance": hell_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
+    
 
-    ## Kernelized OWL with TV dist
-    gmm = SphericalGMM(X, K=K, hard=True)
-    bandiwdth_schedule = [knn_bandwidth(X, 5)]
-    kde = KDE(X=X, bandwidth=bandiwdth_schedule[0], method='rbf')
-    owl_kern_tv = fit_kernelized_owl(gmm, tv_ball, kde, bandiwdth_schedule, repeats=10, admmsteps=ADMMSTEPS, verbose=False)
-    mean_dist = owl_kern_tv.mean_mse(mu)
-    hell_dist = owl_kern_tv.hellinger_distance(mu, tau)
-    ari = owl_kern_tv.adjusted_rand_index(z, uncorrupt_mask)
+    ## OWL with TV dist (known radius)
+    owl_tv = SphericalGMM(X, K=K, hard=True)
+    l1_ball = L1Ball(n=n, r=epsilon)
+    owl_tv.fit_owl(l1_ball, admmsteps=ADMMSTEPS)
+    mean_dist = owl_tv.mean_mse(mu)
 
-    results.append({"Method": "OWL (TV-Kernelized)", 
+    results.append({"Method": "OWL ($\epsilon$ known)", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
-                    "Hellinger distance": hell_dist,
-                    "Adjusted Rand Index": ari,
                     "Corruption type": corr_type,
                     "Corruption scale": corr_scale})
 
