@@ -973,7 +973,7 @@ def curvature(x, y):
     return(curv)
 
 
-micro_folder = '../results/microcredit/'
+micro_folder = 'results/microcredit/'
 files = [fname for fname in os.listdir(micro_folder) if fname.endswith('.pkl')]
 results = []
 for fname in files:
@@ -1038,6 +1038,8 @@ temp_boot_df.loc[temp_boot_df['Epsilon']==0, 'Epsilon'] = 1e-5
 temp_orig_df.loc[temp_orig_df['Epsilon']==0, 'Epsilon'] = 1e-5
 
 plt.clf()
+plt.rcParams["figure.figsize"] = (6.4, 4.8)
+fig = plt.figure(figsize=(6.4, 4.8))
 sns.lineplot(data=temp_boot_df.iloc[boot_idx], x="Epsilon", y="OWL ATE", errorbar=None)
 
 
@@ -1053,12 +1055,12 @@ plt.ylabel('ATE on profit (USD PPP/fortnight)', fontsize=12)
 plt.axvline(max_curv_orig_df['Epsilon'], color="tab:orange") ## Epsilon of original
 
 plt.xlabel("TV constraint ($\epsilon$)", fontsize=12)
-plt.savefig("../figures/micro_ate_linear.pdf", bbox_inches='tight')
+plt.savefig("figures/micro_ate_linear.pdf", bbox_inches='tight')
 
 
 plt.xscale('log')
 plt.xticks(ticks=[1e-5, 1e-4,1e-3, 1e-2, 1e-1 ], labels=["$0$", "$10^{-4}$", "$10^{-3}$","$10^{-2}$", "$10^{-1}$" ])
-plt.savefig("../figures/micro_ate_log.pdf", bbox_inches='tight')
+plt.savefig("figures/micro_ate_log.pdf", bbox_inches='tight')
 
 
 ## OKL estimate v.s. epsilon
@@ -1077,16 +1079,16 @@ plt.axvline(max_curv_orig_df['Epsilon'], color="tab:orange") ## Epsilon of origi
 
 plt.xlabel("TV constraint ($\epsilon$)", fontsize=12)
 plt.ylabel("Minimum OKL estimate", fontsize=12)
-plt.savefig("../figures/micro_okl_linear.pdf", bbox_inches='tight')
+plt.savefig("figures/micro_okl_linear.pdf", bbox_inches='tight')
 
 
 plt.xscale("log")
-plt.savefig("../figures/micro_okl_log.pdf", bbox_inches='tight')
+plt.savefig("figures/micro_okl_log.pdf", bbox_inches='tight')
 
 
 ## Plot inliers and outliers
 plt.clf()
-X = pd.read_csv("../data/microcredit.csv")
+X = pd.read_csv("data/microcredit.csv")
 X['val'] = X['profit']
 
 _, bins, _ = plt.hist(X[X['weight']<1]['val'], bins=50, alpha=0.5, color='tab:blue', density=True, label='Outliers')
@@ -1095,4 +1097,4 @@ plt.hist(X[X['weight']>1]['val'], bins=bins, alpha=0.5, color='tab:orange', dens
 plt.legend()
 plt.xlabel("Household profit (USD PPP/Fortnite)")
 plt.ylabel("Density")
-plt.savefig("../figures/hist.pdf", bbox_inches='tight')
+plt.savefig("figures/hist.pdf", bbox_inches='tight')
