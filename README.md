@@ -1,6 +1,7 @@
 # OWL: Robustifying likelihoods by optimistically re-weighting data
 
-This package implements OWL, a robust approach for fitting probabilistic models with likelihood functions.
+This package implements OWL, a robust approach for fitting probabilistic models 
+with likelihood functions.
 
 ## Installing OWL
 
