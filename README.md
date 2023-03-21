@@ -70,10 +70,18 @@ More examples are in the `examples/Simple OWL models.ipynb` notebook.
 
 ## Citation
 
-If you use this code, please cite the [preprint]( missing ):
+If you use this code, please cite the [preprint](https://arxiv.org/abs/2303.10525):
 
 ```
 Robustifying likelihoods by optimistically re-weighting data
 M. Dewaskar, C.Tosh, J. Knoblauch, and D. Dunson
-blank
+
+@misc{dewaskar2023robustifying,
+      title={Robustifying likelihoods by optimistically re-weighting data}, 
+      author={Miheer Dewaskar and Christopher Tosh and Jeremias Knoblauch and David B. Dunson},
+      year={2023},
+      eprint={2303.10525},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME}
+}
 ```
