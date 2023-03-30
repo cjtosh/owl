@@ -10,7 +10,7 @@ os.makedirs('data', exist_ok=True)
 
 mnist = fetch_openml('mnist_784')
 
-with open("data/mnist.pkl", 'rb') as io:
+with open("data/mnist.pkl", 'wb') as io:
     pickle.dump(mnist, io)
 
 
