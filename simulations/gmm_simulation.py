@@ -105,13 +105,13 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Processing arguments')
+    parser = argparse.ArgumentParser(description='Gaussian mixture model simulations')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
     parser.add_argument('--n', type=int, default=1000, help="The number of samples.")
     parser.add_argument('--p', type=int, default=10, help="The dimension of the problem.")
     parser.add_argument('--stdv', type=float, default=0.5, help="The scale of corruptions.")
     parser.add_argument('--corr_scale', type=float, default=5.0, help="The scale of corruptions.")
-    parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions.")
+    parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions (input 'max' or 'rand').")
     args = parser.parse_args()
     seed = args.seed
 

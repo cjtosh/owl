@@ -153,10 +153,10 @@ def linreg_corruption_comparison(X_train_:np.ndarray, y_train_:np.ndarray, X_tes
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Processing arguments')
+    parser = argparse.ArgumentParser(description='Linear regression simulations')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--dataset', type=str, default='qsar', help="The dataset we're looking at.")
-    parser.add_argument('--corr_type', type=str, default='max', help="The type of corruption.")
+    parser.add_argument('--dataset', type=str, default='qsar', help="The dataset to run on (input 'qsar' or 'random').")
+    parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions (input 'max' or 'rand').")
 
     args = parser.parse_args()
     seed = args.seed

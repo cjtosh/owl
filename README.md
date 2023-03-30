@@ -68,6 +68,12 @@ owl.fit_owl(ball=l1ball, n_iters=10, verbose=True)
 
 More examples are in the `examples/Simple OWL models.ipynb` notebook.
 
+## Running the simulations from the paper
+
+ To download the publicly available datasets used in the paper (i.e., MNIST, QSAR, ENRON, and scRNA-Seq data), run `python simulations/download.py` from the command line. This will create a subdirectory `data` in the main directory containing the relevant files.
+
+The subdirectory `simulations` contains the python scripts for running the various simulations in the paper. To see the arguments for the script, call the script with the `--help` flag. For example, `simulations/gmm_simulation.py --help`. The bash script `simulations/reproduce_paper_plots.sh` contains all the calls necessary to reproduce the plots in the paper (be warned that calling this script will take a very long time).
+
 ## Citation
 
 If you use this code, please cite the [preprint]( missing ):
