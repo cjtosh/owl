@@ -1,4 +1,4 @@
-To download most of the external datasets used in the paper (i.e., MNIST, QSAR, ENRON, and scRNA-Seq data), run `python simulations/download.py` from the command line. This will create a subdirectory `data` in the main directory containing the relevant files. 
+To download most of the external datasets used in the paper (i.e., MNIST, QSAR, ENRON, and scRNA-Seq data), run `python simulations/download.py` from the command line. This will create the relevant files in the `data` subdirectory of the main directory. 
 
 To obtain the preliminary data for the micro-credit study (in `data/microcredit.csv`) you will need to run the following Quarto document.
 
