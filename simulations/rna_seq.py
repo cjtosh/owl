@@ -13,16 +13,16 @@ from scipy.special import xlogy
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Processing arguments')
-    parser.add_argument('--seed', type=int, default=100, help="The random seed.")
+    parser = argparse.ArgumentParser(description='A single run of scRNA-Seq clustering')
+    parser.add_argument('--i', type=int, default=100, help="The argument that determines seed + epsilon.")
 
     epsilons = np.linspace(0.05, 0.95, 10)
     neps = len(epsilons)
 
     args = parser.parse_args()
-    seed = 100 + ((args.seed-1) // neps)
+    seed = 100 + ((args.i-1) // neps)
 
-    eps_idx = args.seed % neps
+    eps_idx = args.i % neps
     eps = epsilons[eps_idx] 
 
     np.random.seed(seed)

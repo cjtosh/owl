@@ -47,7 +47,7 @@ done
 ## RNA experiments
 for i in {1..150}
 do
-    python simulations/rna_seq.py --seed $i
+    python simulations/rna_seq.py --i $i
 done 
 
 

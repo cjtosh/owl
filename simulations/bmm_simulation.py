@@ -126,26 +126,24 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Processing arguments')
+    parser = argparse.ArgumentParser(description='Bernoulli mixture model simulations')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--dataset', type=str, default='simul', help="The dataset we're looking at.")
-    parser.add_argument('--corr_type', type=str, default='max', help="The random seed.")
+    parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions (input 'max' or 'rand').")
 
 
     args = parser.parse_args()
     seed = args.seed
-    dataset = args.dataset
     corr_type = args.corr_type
     np.random.seed(seed)
 
-    if dataset=='simul':
-        n = 1000
-        K = 3
-        p = 100
-        lam, pi, X, z = simulated_bmm_data(n, K, p)
-        true_C = pred_cooccurrence(lam=lam, pi=pi)
-        epsilons = np.linspace(start=0.01, stop=0.25, num=10)
-        
+
+    n = 1000
+    K = 3
+    p = 100
+    lam, pi, X, z = simulated_bmm_data(n, K, p)
+    true_C = pred_cooccurrence(lam=lam, pi=pi)
+    epsilons = np.linspace(start=0.01, stop=0.25, num=10)
+    
     full_results = []
 
     for epsilon in tqdm(epsilons):
