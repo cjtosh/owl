@@ -13,7 +13,7 @@ setup(
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python'
-        ],
+        ], 
     keywords=['probabilistic-modeling', 'robust-statistics','maximum-likelihood'],
     platforms="ALL"
 )
