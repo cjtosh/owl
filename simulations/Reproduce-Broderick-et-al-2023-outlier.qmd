@@ -1,0 +1,167 @@
+---
+title: "Reproducing the micro-credit example with outliers from Broderick et al. (2020)"
+author: "Miheer Dewaskar"
+bibliography: refs.bib
+format: pdf
+editor: visual
+---
+
+In this note, I will reproduce the micro-credit example (data originally from [@angelucci2015]), in which the removal of a small number of points, substantially impacts inference [@broderick2020automatic]. The data-set consist of a survey of $n=16,560$ households from different communities in Mexico that were randomly assigned (at the community level) to receive an increase in access to credit. Here we will focus on the effect of the increase in access to credit (treatment) on the average household profit (outcome). This reduces to estimating the coefficient $\beta_1$ in the model: $$
+Y_i = \beta_0 + \beta_1 T_i
+$$ where $Y_i$ is the profit in household $i$ in the two weeks before the survey (measured in USD PPP), and $T_i \in \{0,1\}$ is the treatment variable indicating if household $i$ is in a community that received an increase in access to credit or not.
+
+## Reproducing the example
+
+I first downloaded the "reproducibility package" for [@meager2019] from the journal website. I extracted and stored it in the "116357-V1" folder.
+
+Then the I downloaded the [zaminfluence package](https://github.com/rgiordan/zaminfluence) based on the method [@broderick2020automatic] for detecting sensitive observations.
+
+```{r}
+#| echo: false
+#| output: false
+#| warnings: false
+
+## Load the required packages
+if (!require(devtools)) {
+    install.packages("devtools")
+    library(devtools)
+}
+
+if (!require(zaminfluence)) {
+   # If you face any problem with installation, check: https://github.com/rgiordan/zaminfluence
+    devtools::install_github("https://github.com/rgiordan/zaminfluence/",
+                           ref="master",
+                           subdir="zaminfluence",
+                           force=TRUE)
+}
+```
+
+Next, I load the micro-credit data as processed by Meager.
+
+```{r}
+#| echo: false
+
+env <- new.env()
+load("./116357-V1/data/microcredit_project_data.RData", envir = env)
+```
+
+In particularly, we will focus on seeing the impact of micro-credits on household profit in the Angelucci study [@angelucci2015], and we impute missing profits to zero following [@meager2019]. Standard Least Squares Regression on the resulting data provides a negative (but non-significant) Average Treatment Effect (ATE), i.e. the estimate $\beta_1 = -4.55$ USD PPP.
+
+```{r}
+#| echo: false
+
+## Modification of code from ./116357-V1/data/replicating-microcredit-regressions-profit.R
+
+angelucci_profit_regression <- summary(lm(env$the_profit_standardiser_USD_PPP_per_fortnight[1]*env$angelucci_profit ~ env$angelucci_treatment))
+print(angelucci_profit_regression)
+```
+
+Using the zaminfluence package, we identify a single household that has substantial impact on ATE.
+
+```{r}
+#| echo: false
+#| output: false
+
+# Modifying code form README of https://github.com/rgiordan/zaminfluence;
+
+library(tidyverse)
+library(gridExtra)
+library(zaminfluence)
+
+#############################
+# Fit a regression model.
+df <- data.frame(profit=env$angelucci_profit*env$the_profit_standardiser_USD_PPP_per_fortnight[1], treatment = env$angelucci_treatment)
+df <- df[complete.cases(df), ]
+reg_form <- formula("profit ~ treatment")
+fit_object <- lm(data = df, formula=reg_form, x=TRUE, y=TRUE)
+
+#############################
+# Now it's zaminfluence time!
+
+# Get influence scores for the first two regressors.
+model_grads <-
+    ComputeModelInfluence(fit_object) %>%
+    AppendTargetRegressorInfluence("treatment")
+
+# Compute the changes needed to change sign, significance, and both
+signals <- GetInferenceSignals(model_grads)
+
+#signals %>% names()
+#signals[["treatment"]] %>% names()
+signal <- signals[["treatment"]][["sign"]] 
+
+stopifnot(signal$apip$success)
+
+sprintf("Proportion of points needed to change ATE: %f",
+        signal$apip$prop)
+
+sprintf("Number of points needed to change sign of ATE: %d",
+        signal$apip$n)
+
+df$drop <- FALSE
+df$drop[signal$apip$inds] <- TRUE
+
+df$resid <- fit_object$residuals
+
+ggplot(df) + geom_point(aes(x=treatment, y=resid, color=drop))
+```
+
+No doubt this observation is an outlier: this observation had a loss of 40,000 USD PPP:
+
+```{r}
+#| echo: false
+library(ggallin)
+
+ggplot(df, aes(y=profit, x=as.logical(df$treatment), col=drop)) + geom_jitter() + labs(y="Profit in USD PPP (since 2 weeks)", x="Treatment", col="Identified as outlier") 
+```
+
+Removing the observation and refitting, results in a positive (but still) non-significant estimate for the ATE:
+
+```{r}
+#| echo: false
+fit_object2 <- lm(data = df[!df$drop, ], formula=reg_form, x=TRUE, y=TRUE)
+summary(fit_object2)
+```
+
+Next, the zaminfluence package also identifies additional 14 observations, which can change the non-significance of ATE to significance.
+
+```{r}
+#| echo: false
+#| output: false
+
+signal <- signals[["treatment"]][["sig"]] 
+
+sprintf("Number of points needed to change sign of ATE: %d",
+        signal$apip$n)
+
+df$drop2 <- FALSE
+df$drop2[signal$apip$inds] <- TRUE
+
+df$resid <- fit_object$residuals
+
+ggplot(df) + geom_jitter(aes(x=treatment, y=resid, color=drop2))
+
+clean_df <- select(df, -resid)
+rownames(clean_df) <- NULL
+write.csv(clean_df, file="../data/microcredit.csv")
+```
+
+These observations seem to have profit values in the tails, but it is not clear why other tail observations were not chosen:
+
+```{r}
+#| echo: false
+ggplot(filter(df, !drop), aes(y=profit, col=drop2, x=as.logical(treatment))) + geom_jitter() + labs(y="Profit in USD PPP (since 2 weeks)", x = "Treatment", col="outlier identified")
+```
+
+Removing the observation and refitting, results in a significant negative estimate for the ATE. (Note this is somewhat expected as we removed treated households with large profits and untreated households with small profits)
+
+```{r}
+#| echo: false
+fit_object3 <- lm(data = df[!(df$drop2 | df$drop), ], formula=reg_form, x=TRUE, y=TRUE)
+summary(fit_object3)
+```
+
+### References
+
+::: {#refs}
+:::

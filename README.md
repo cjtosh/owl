@@ -68,9 +68,20 @@ owl.fit_owl(ball=l1ball, n_iters=10, verbose=True)
 
 More examples are in the `examples/Simple OWL models.ipynb` notebook.
 
-## Running the simulations from the paper
+## Running the data analysis and simulations from the paper
 
- To download the publicly available datasets used in the paper (i.e., MNIST, QSAR, ENRON, and scRNA-Seq data), run `python simulations/download.py` from the command line. This will create a subdirectory `data` in the main directory containing the relevant files.
+To download most of the external datasets used in the paper (i.e., MNIST, QSAR, ENRON, and scRNA-Seq data), run `python simulations/download.py` from the command line. This will create the relevant files in the `data` subdirectory of the main directory. To obtain the preliminary data for the micro-credit study (in `data/microcredit.csv`) you will need to run the following Quarto document.
+
+### Reproducing the micro-credit example from Broderick et al. (2023)
+
+1.  Download and extract the [Meager (2019) replication data](https://doi.org/10.3886/E116357V1) into the `./simulations/116357-V1` folder.
+2.  Download [Quarto](https://quarto.org/docs/get-started/) and run the command
+
+```
+quarto render simulations/Reproduce-Broderick-et-al-2023-outlier.qmd
+```
+
+### Running the simulations and analysis from the paper
 
 The subdirectory `simulations` contains the python scripts for running the various simulations in the paper. To see the arguments for the script, call the script with the `--help` flag. For example, `simulations/gmm_simulation.py --help`. The bash script `simulations/reproduce_paper_plots.sh` contains all the calls necessary to reproduce the plots in the paper (be warned that calling this script will take a very long time). 
 
