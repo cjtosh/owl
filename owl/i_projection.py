@@ -5,7 +5,6 @@ from owl.kde import KDE
 from owl.proximal import ProximalOperator, ProxSimplex, ProxKLLogScale
 from copy import deepcopy
 
-
 '''
     Finds w that minimizes (kernel adjusted) KL objective.
 '''

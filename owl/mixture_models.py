@@ -7,7 +7,7 @@ from owl.kde import knn_bandwidth
 from scipy.spatial.distance import cdist, pdist
 from copy import deepcopy
 from sklearn.cluster import AgglomerativeClustering
-from scipy.special import xlogy, logsumexp
+from scipy.special import xlogy, logsumexp, gammaln
 from scipy.optimize import linear_sum_assignment
 
 '''
@@ -439,3 +439,88 @@ class BernoulliMM(OWLMixtureModel):
         dist_mat = cdist(self.lam, lam, metric=mean_l1)
         row_ind, col_ind = linear_sum_assignment(dist_mat)
         return(dist_mat[row_ind, col_ind].mean())
+    
+
+'''
+    Implements Poisson mixture model.
+'''
+class PoissonMM(OWLMixtureModel):
+    def __init__(self, 
+                 X:np.ndarray, 
+                 K:int, 
+                 w: np.ndarray = None,
+                 hard: bool = True, 
+                 em_steps: int = 20, 
+                 repeats:int=10,
+                 **kwargs):
+        n  = len(X)
+        super().__init__(n=n, w=w, hard=hard, em_steps=em_steps, repeats=repeats, **kwargs)
+        self.X = X
+        self.K = K
+        self.pi = np.ones(self.K)/self.K
+        self.lam = np.zeros(self.K)
+        
+        self.reinitialize(reset_w=False)
+
+    def reinitialize(self, reset_w: bool, **kwargs) -> None:
+        if reset_w:
+            self.w = np.ones(self.n)
+        
+        self.z = np.random.choice(self.K, size=self.n, replace=True)
+
+        ## Take M step
+        self.hard_M_step()
+
+    def soft_M_step(self, **kwargs):
+        self.pi = np.mean(self.probs, axis=0)
+        self.pi = self.pi/np.sum(self.pi)
+
+        for k in range(self.K):
+            if self.pi[k] > 0:
+                self.lam[k] =np.sum(self.X*self.probs[:,k])/np.sum(self.probs[:,k])
+            else:
+                idx = np.random.choice(self.n)
+                self.lam[k] = self.X[idx]                
+                
+    def hard_M_step(self, **kwargs): ## Should be weighted
+        for k in range(self.K):
+            mask = self.z==k
+            cluster_size = np.sum(mask)
+            cluster_weight = np.sum(self.w[mask])
+            if (cluster_weight > 0) and (cluster_size > 1):
+                self.lam[k] = np.sum(self.X[mask]*self.w[mask])/cluster_weight
+            elif (cluster_size == 1):
+                self.lam[k] = np.squeeze(self.X[mask])
+            else:
+                idx = np.random.choice(self.n)
+                self.z[idx] = k
+                self.lam[k] = self.X[idx]
+                cluster_size = 1
+            self.pi[k] = cluster_size/self.n
+        self.pi = self.pi/np.sum(self.pi)
+        self.lam = np.clip(self.lam, a_min=1e-4, a_max=np.inf)
+        
+    def E_step(self, **kwargs):
+        ll1 = np.log(self.pi) + self.X[:,np.newaxis]*np.log(self.lam[np.newaxis,:])
+        ll2 = -self.lam[np.newaxis,:] - gammaln(self.X[:,np.newaxis]+1)
+        log_probs = ll1 + ll2
+        probs = np.exp( log_probs - np.max(log_probs, axis=1, keepdims=True) )
+        self.probs = probs/np.sum(probs, axis=1, keepdims=True)
+        self.z = np.argmax(log_probs, axis=1)
+        
+    def log_likelihood(self):
+        if self.hard:
+            ll1 = self.X*np.log(self.lam[self.z])
+            ll2 = -self.lam[self.z] - gammaln(self.X+1)
+            return( ll1 + ll2)
+        else:
+            ll1 = np.log(self.pi) + self.X[:,np.newaxis]*np.log(self.lam[np.newaxis,:])
+            ll2 = -self.lam[np.newaxis,:] -gammaln(self.X[:,np.newaxis]+1)
+            expanded_result = ll1 + ll2
+            return(logsumexp(expanded_result, axis=1))
+        
+    def probability(self, x:np.ndarray):
+        ll1 = np.log(self.pi) + x[:,np.newaxis]*np.log(self.lam[np.newaxis,:])
+        ll2 = -self.lam[np.newaxis,:] -gammaln(x[:,np.newaxis]+1)
+        log_probs = logsumexp(ll1 + ll2, axis=1) 
+        return(np.exp(log_probs))
