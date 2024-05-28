@@ -49,16 +49,21 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
                     "Corruption type": corr_type})
     
 
+    weights = {}
+    weights["inds_corrupt"] = inds_corrupt
+
     ## OWL - TV
     g = Gaussian(X=X)
     tv_ball = L1Ball(n=n, r=2*epsilon)
     g.fit_owl(ball=tv_ball, n_iters=10)
+    prob = g.w/np.sum(g.w)
     mu_dist = np.mean(np.square(mu - g.mu ))
     results.append({"Method": "OWL (TV)", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mu_dist,
                     "Corruption type": corr_type})
     
+    weights["OWL (TV)"] = prob
 
     ## OWL - Kernelized TV
     best_ll = -np.infty
@@ -79,6 +84,9 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
                         "Corruption fraction": epsilon, 
                         "Mean MSE": mu_dist,
                         "Corruption type": corr_type})
+        
+        weights["OWL (Kernelized, k=" + str(k) + ")"] = prob
+
         if ll > best_ll:
             best_ll = ll
             mu_dist_sel = mu_dist
@@ -88,8 +96,7 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
                     "Mean MSE": mu_dist_sel,
                     "Corruption type": corr_type})
 
-
-    return(results)
+    return(results, weights)
 
 
 
@@ -112,18 +119,24 @@ if __name__ == "__main__":
     folder = os.path.join("results/gaussian", "dim_"+str(dim))
     os.makedirs(folder, exist_ok=True)
     fname = os.path.join(folder, corr_type+"_"+str(seed)+".pkl")
+    weight_fname = os.path.join(folder, "weights_"+corr_type+"_"+str(seed)+".pkl")
 
     mu = np.random.uniform(low=-scale, high=scale, size=dim)
     cov = np.eye(dim)
     X = stats.multivariate_normal.rvs(mean=mu, cov=cov, size=n, random_state=None)
 
     full_results = []
+    full_weights = {}
     epsilons = np.linspace(start=0.01, stop=0.5, num=15)
     for epsilon in tqdm(epsilons):
-        results = gaussian_corruption_comparison(X, mu, cov, epsilon, scale, corr_type)
+        results, weights = gaussian_corruption_comparison(X, mu, cov, epsilon, scale, corr_type)
         full_results.extend(results)
+        full_weights[epsilon] = weights
         with open(fname, 'wb') as io:
             pickle.dump(full_results, io)
+
+        with open(weight_fname, 'wb') as io:
+            pickle.dump(full_weights, io)
     
    
 
