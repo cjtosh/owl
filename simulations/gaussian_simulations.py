@@ -115,9 +115,9 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--scale', type=float, default=5.0, help="The scale of corruption.")
+    parser.add_argument('--scale', type=float, default=10.0, help="The scale of corruption.")
     parser.add_argument('--dim', type=int, default=2, help="The dimension of the problem.")
-    parser.add_argument('--n', type=int, default=100, help="The number of data points.")
+    parser.add_argument('--n', type=int, default=200, help="The number of data points.")
     parser.add_argument('--corr_type', type=str, default='max', help="The type of corruption.")
 
     args = parser.parse_args()

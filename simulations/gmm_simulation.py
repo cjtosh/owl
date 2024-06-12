@@ -124,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument('--n', type=int, default=1000, help="The number of samples.")
     parser.add_argument('--p', type=int, default=10, help="The dimension of the problem.")
     parser.add_argument('--stdv', type=float, default=0.5, help="The scale of corruptions.")
-    parser.add_argument('--corr_scale', type=float, default=5.0, help="The scale of corruptions.")
+    parser.add_argument('--corr_scale', type=float, default=10.0, help="The scale of corruptions.")
     parser.add_argument('--corr_type', type=str, default='max', help="The method of choosing corruptions (input 'max' or 'rand').")
     args = parser.parse_args()
     seed = args.seed
