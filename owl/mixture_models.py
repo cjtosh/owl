@@ -223,7 +223,18 @@ class SphericalGMM(OWLMixtureModel):
         return(dist_mat[row_ind, col_ind].mean())
 
 
-
+    def rbf_kernel_smoothed_log_likelihood(self, h: float, **kwargs):
+        with np.errstate(divide = 'ignore'):
+            log_prior_probs = np.log(self.pi)
+        
+        var_inflated = np.square(h) + (1./self.tau)
+        tau_inflated = 1.0/var_inflated
+        if self.hard:
+            return(log_prior_probs[self.z] + 0.5*self.p*np.log(tau_inflated[self.z]) - 0.5*tau_inflated[self.z]*np.sum(np.square(self.X - self.mu[self.z]), axis=1))
+        else:
+            square_dists = cdist(self.X, self.mu, metric='sqeuclidean') ## n x K
+            expanded_result = log_prior_probs + 0.5*self.p*np.log(tau_inflated) - 0.5*tau_inflated*square_dists
+            return(logsumexp(expanded_result, axis=1))
 
 class GeneralGMM(OWLMixtureModel):
     def __init__(self, 
@@ -333,7 +344,24 @@ class GeneralGMM(OWLMixtureModel):
                 log_mat[:,k] = log_prior_probs[k] + 0.5*log_dets[k] - 0.5*(cdist(self.X, (self.mu[k,:])[np.newaxis,:], metric='mahalanobis', VI=self.prec_mats[k])).squeeze()
             return(logsumexp(log_mat, axis=1))
 
+    def rbf_kernel_smoothed_log_likelihood(self, h: float, **kwargs):
+        with np.errstate(divide = 'ignore'):
+            log_prior_probs = np.log(self.pi)
 
+        diag_h = np.square(h)*np.eye(self.p)
+        cov_inflated = diag_h[np.newaxis,...] + (1./self.prec_mats)
+        prec_mats_inflated = 1.0/cov_inflated
+        _, log_dets = np.linalg.slogdet(prec_mats_inflated)
+
+        if self.hard:
+            diff = self.X - self.mu[self.z]
+            sq_mahal = np.einsum('ij, ik, ijk -> i' , diff, diff, prec_mats_inflated[self.z])
+            return(log_prior_probs[self.z] + 0.5*log_dets[self.z] - 0.5*sq_mahal)
+        else:
+            log_mat = np.zeros((self.n, self.K))
+            for k in range(self.K):
+                log_mat[:,k] = log_prior_probs[k] + 0.5*log_dets[k] - 0.5*(cdist(self.X, (self.mu[k,:])[np.newaxis,:], metric='mahalanobis', VI=prec_mats_inflated[k])).squeeze()
+            return(logsumexp(log_mat, axis=1))
 
 '''
     Implements a product Bernoulli mixture model.

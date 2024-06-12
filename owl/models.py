@@ -39,6 +39,10 @@ class OWLModel(object):
     def maximize_weighted_likelihood(self, **kwargs):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def rbf_kernel_smoothed_log_likelihood(self, h:float, **kwargs):
+        raise NotImplementedError
+
     def reset_w(self):
         self.w = self.w_init.copy()
 
