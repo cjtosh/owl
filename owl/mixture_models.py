@@ -4,7 +4,7 @@ from owl.models import OWLModel
 from owl.ball import ProbabilityBall
 from owl.kde import KDE
 from owl.kde import knn_bandwidth
-from scipy.spatial.distance import cdist, pdist
+from scipy.spatial.distance import cdist, pdist, squareform
 from copy import deepcopy
 from sklearn.cluster import AgglomerativeClustering
 from scipy.special import xlogy, logsumexp, gammaln
@@ -457,6 +457,17 @@ class BernoulliMM(OWLMixtureModel):
 
             return(logsumexp(log_mat, axis=1))
 
+    def unique_mapping(self, **kwargs) -> np.ndarray:
+        ## Get unique data points
+        dists = squareform(pdist(self.X))
+        idx_unique = [0]
+        for i in range(1, self.X.shape[0]):
+            d = dists[i, :(i+1)]
+            i_min = np.argmin(d)
+            idx_unique.append(i_min)
+        return(np.array(idx_unique))
+    
+    
     def cooccurrence(self) -> np.ndarray:
         C_tens = np.einsum('hi, hj -> hij', self.lam, self.lam)
         C = np.einsum('hij, h -> ij', C_tens, self.pi)

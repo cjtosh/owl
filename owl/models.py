@@ -40,7 +40,11 @@ class OWLModel(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def rbf_kernel_smoothed_log_likelihood(self, h:float, **kwargs):
+    def rbf_kernel_smoothed_log_likelihood(self, h:float, **kwargs) -> np.ndarray:
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def unique_mapping(self, **kwargs)->np.ndarray:
         raise NotImplementedError
 
     def reset_w(self):

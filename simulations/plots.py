@@ -21,7 +21,7 @@ def load_results(folder):
 
         if fname.startswith('max'):
             max_results.extend(res)
-        else:
+        elif fname.startswith('rand'):
             rand_results.extend(res)
     max_df = pd.DataFrame(max_results)
     rand_df = pd.DataFrame(rand_results)
@@ -49,7 +49,8 @@ palette={'OWL':colors[0],
          'RANSAC MLE':colors[3], 
          'Ridge Regression (CV)':colors[1], 
          'Huber Regression':colors[5],
-         "OWL (Kernelized, $\epsilon$ known)":colors[5]}
+         "OWL (Kernelized, $\epsilon$ known)":colors[5], 
+         'Pearson residuals':colors[1]}
 
 size_2x3 = (16,8)
 size_2x2 = (13,8)

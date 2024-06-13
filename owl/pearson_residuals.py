@@ -17,8 +17,7 @@ def chisquare_weight_function(delta:np.ndarray):
     return(w)
 
 
-
-def pearson_residual_optimization(model:OWLModel, 
+def pearson_residual_continuous(model:OWLModel, 
                                   kde:RBFKDE, 
                                   n_iters:int=20,
                                   weight_fn:str='hellinger',
@@ -53,7 +52,7 @@ def pro_hellinger_selection(model:OWLModel, kde_list:list[RBFKDE], n_iters:int=2
     
     for kde in tqdm(kde_list, disable=(not verbose)):
         curr_model = deepcopy(model)
-        curr_model = pearson_residual_optimization(curr_model, kde=kde, n_iters=n_iters, weight_fn='hellinger', verbose=False)
+        curr_model = pearson_residual_continuous(curr_model, kde=kde, n_iters=n_iters, weight_fn='hellinger', verbose=False)
 
         model_log_likelihood = model.log_likelihood()
         kde_log_likelihood = kde.log_likelihood()
@@ -65,3 +64,36 @@ def pro_hellinger_selection(model:OWLModel, kde_list:list[RBFKDE], n_iters:int=2
             best_kde = kde
 
     return(best_model, best_distance, best_kde)
+
+def pearson_residual_discrete(model:OWLModel, 
+                              n_iters:int=20, 
+                              weight_fn:str='hellinger',
+                              verbose:bool=False):
+    
+    idx_unique = model.unique_mapping()
+    idxs, inverse, counts = np.unique(idx_unique, return_inverse=True, return_counts=True)
+    empirical_log_prob = np.log(counts/np.sum(counts))
+    weight_function = hellinger_weight_function if weight_fn=='hellinger' else chisquare_weight_function
+    
+    for _ in trange(n_iters, disable=(not verbose)):
+        model.maximize_weighted_likelihood()
+
+        ## Convert likelihoods of individual observations to likelihoods of discrete elements
+        model_log_likelihood = model.log_likelihood()
+        model_log_likelihood = model_log_likelihood[idxs]
+        
+        ## Clip at extremal values without going to infinity
+        log_likelihood_diff = np.clip(empirical_log_prob - model_log_likelihood, a_min=-700, a_max=700)
+        delta = np.exp(log_likelihood_diff) - 1 ## Pearson residual
+
+        w = weight_function(delta)
+
+        ## Remap weights to individual data points
+        w = w/counts
+        w = w[inverse]
+
+        model.set_w(w)
+    
+    model.maximize_weighted_likelihood()
+
+    return(model)
