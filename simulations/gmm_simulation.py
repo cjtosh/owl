@@ -15,9 +15,7 @@ ADMMSTEPS = 5000
 
 def simulated_gmm_data(p, n, K, stdv_0, stdv):
     mu =  stdv_0 * np.random.randn(K,p)
-    # stdvs = np.random.uniform(low=0.0, high=stdv, size=K)
     stdvs = np.ones(K)*stdv
-    # pi = np.random.dirichlet(np.ones(K))
     pi = np.ones(K)/K
     
     X = np.empty((n,p))
@@ -32,7 +30,6 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     z = deepcopy(z_)
     mu = deepcopy(mu_)
     stdvs = deepcopy(stdvs_)
-    tau = 1.0/np.square(stdvs)
 
     results = []
     n_corrupt = int(epsilon*n)
