@@ -97,8 +97,8 @@ class KDE():
         return(self.rowsums)
 
     def log_likelihood(self):
-        n_cols = self.kernel_mat.shape[1]
         rowsums = self.row_sums()
+        n_cols = self.kernel_mat.shape[1]
         return(np.log(rowsums/n_cols))
 
     '''
