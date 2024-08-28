@@ -17,7 +17,7 @@ def tv_dist_to_unif(w):
     return(np.sum(np.abs(w-e))/2.)
 
 if __name__ == "__main__":
-    df = pd.read_csv("../data/micro-credit-profit-vs-treatment-data.csv")
+    df = pd.read_csv("../data/microcredit.csv")
     # Drop empty column
     df = df.drop(df.columns[[0]], axis=1)
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     new_df['weight'] = m.w
 
     ## Save out the new dataframe
-    new_df.to_csv("../data/microcredit.csv")
+    new_df.to_csv("../data/microcredit_weight.csv")
 
 
 
