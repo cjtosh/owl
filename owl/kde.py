@@ -98,7 +98,8 @@ class KDE():
 
     def log_likelihood(self):
         rowsums = self.row_sums()
-        return(np.log(rowsums))
+        n_cols = self.kernel_mat.shape[1]
+        return(np.log(rowsums/n_cols))
 
     '''
         MMD: corresponding MMD matrix for the kernel -- MMD_{ij} =  \int_x K(x_i, x) K(x_j, x) dx

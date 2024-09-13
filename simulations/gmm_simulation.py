@@ -4,6 +4,8 @@ from copy import deepcopy
 from owl.models import fit_owl
 from owl.mixture_models import SphericalGMM
 from owl.ball import L1Ball
+from owl.pearson_residuals import pro_hellinger_selection
+from owl.kde import RBFKDE
 from tqdm import tqdm
 import os
 import pickle
@@ -13,9 +15,7 @@ ADMMSTEPS = 5000
 
 def simulated_gmm_data(p, n, K, stdv_0, stdv):
     mu =  stdv_0 * np.random.randn(K,p)
-    # stdvs = np.random.uniform(low=0.0, high=stdv, size=K)
     stdvs = np.ones(K)*stdv
-    # pi = np.random.dirichlet(np.ones(K))
     pi = np.ones(K)/K
     
     X = np.empty((n,p))
@@ -30,7 +30,6 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     z = deepcopy(z_)
     mu = deepcopy(mu_)
     stdvs = deepcopy(stdvs_)
-    tau = 1.0/np.square(stdvs)
 
     results = []
     n_corrupt = int(epsilon*n)
@@ -96,6 +95,18 @@ def simulation(X_, mu_, stdvs_, z_, K, epsilon, corr_type, corr_scale):
     mean_dist = owl_tv.mean_mse(mu)
 
     results.append({"Method": "OWL ($\epsilon$ known)", 
+                    "Corruption fraction": epsilon, 
+                    "Mean MSE": mean_dist,
+                    "Corruption type": corr_type,
+                    "Corruption scale": corr_scale})
+
+    ## Pearson residuals
+    g = SphericalGMM(X=X, K=K, hard=True)
+    kde_list = [RBFKDE(X=X, neighbors=k) for k in [5, 10, 25, 50]]
+    g, _, _ = pro_hellinger_selection(model=g, kde_list=kde_list)
+    mean_dist = g.mean_mse(mu)
+
+    results.append({"Method": "Pearson residuals", 
                     "Corruption fraction": epsilon, 
                     "Mean MSE": mean_dist,
                     "Corruption type": corr_type,

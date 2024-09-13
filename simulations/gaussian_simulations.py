@@ -7,6 +7,7 @@ from scipy.special import xlogy
 from owl.ball import L1Ball
 from owl.kde import RBFKDE, knn_bandwidth
 from owl.gaussian import Gaussian
+from owl.pearson_residuals import pro_hellinger_selection
 from tqdm import tqdm
 
 
@@ -96,6 +97,17 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
                     "Mean MSE": mu_dist_sel,
                     "Corruption type": corr_type})
 
+
+    ## Pearson-residuals
+    g = Gaussian(X=X)
+    kde_list = [RBFKDE(X=X, neighbors=k) for k in [5, 10, 25, 50]]
+    g, _, _ = pro_hellinger_selection(model=g, kde_list=kde_list)
+    prob = g.w/np.sum(g.w)
+    mu_dist = np.mean(np.square(mu - g.mu ))
+    results.append({"Method": "Pearson residuals", 
+                    "Corruption fraction": epsilon, 
+                    "Mean MSE": mu_dist,
+                    "Corruption type": corr_type})
     return(results, weights)
 
 
@@ -103,9 +115,9 @@ def gaussian_corruption_comparison(X_:np.ndarray, mu_:np.ndarray, cov_:np.ndarra
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Processing arguments')
     parser.add_argument('--seed', type=int, default=100, help="The random seed.")
-    parser.add_argument('--scale', type=float, default=5.0, help="The scale of corruption.")
+    parser.add_argument('--scale', type=float, default=10.0, help="The scale of corruption.")
     parser.add_argument('--dim', type=int, default=2, help="The dimension of the problem.")
-    parser.add_argument('--n', type=int, default=100, help="The number of data points.")
+    parser.add_argument('--n', type=int, default=200, help="The number of data points.")
     parser.add_argument('--corr_type', type=str, default='max', help="The type of corruption.")
 
     args = parser.parse_args()

@@ -4,6 +4,7 @@ from copy import deepcopy
 from owl.models import fit_owl
 from owl.mixture_models import BernoulliMM
 from owl.ball import L1Ball
+from owl.pearson_residuals import pearson_residual_discrete
 import os, sys
 import pickle
 from tqdm import tqdm
@@ -109,7 +110,7 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Parameter L1 distance": l1_dist,
                     "Corruption type": corr_type})
     
-    
+
     ## OWL with TV dist (known radius)
     owl_tv = BernoulliMM(X=X, K=K, hard=True)
     l1_ball = L1Ball(n=n, r=2*epsilon)
@@ -120,7 +121,17 @@ def simulation(X_, K, epsilon, corr_type, true_C, z_=None, lam_=None):
                     "Corruption fraction": epsilon, 
                     "Parameter L1 distance": l1_dist,
                     "Corruption type": corr_type})
+    
+    
+    ## Pearson residuals
+    g = BernoulliMM(X=X, K=K, hard=True)
+    g = pearson_residual_discrete(g)
+    l1_dist = g.mean_mae(lam)
 
+    results.append({"Method": "Pearson residuals", 
+                    "Corruption fraction": epsilon, 
+                    "Parameter L1 distance": l1_dist,
+                    "Corruption type": corr_type})
 
     return(results)
 

@@ -38,3 +38,7 @@ class Gaussian(OWLModel):
                 cov = np.linalg.multi_dot( [V, np.diag(np.clip(lam, a_min=tol, a_max=None)), np.transpose(V)] )
                 tol = 10*tol
 
+    def rbf_kernel_smoothed_log_likelihood(self, h: float, **kwargs):
+        cov_inflated = self.cov + (np.square(h)*np.eye(self.p))
+        smoothed_likelihood = stats.multivariate_normal.logpdf(self.X, mean=self.mu, cov=cov_inflated)
+        return(smoothed_likelihood)
