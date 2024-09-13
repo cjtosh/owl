@@ -1092,8 +1092,11 @@ plt.clf()
 X = pd.read_csv("data/microcredit.csv")
 X['val'] = X['profit']
 
-_, bins, _ = plt.hist(X[X['weight']<1]['val'], bins=50, alpha=0.5, color='tab:blue', density=True, label='Outliers')
-plt.hist(X[X['weight']>1]['val'], bins=bins, alpha=0.5, color='tab:orange', density=True, label='Inliers')
+# Remove an extreme outlier to help with visualization
+X.drop(X[X['val'] < -10000].index, inplace=True)
+
+_, bins, _ = plt.hist(X[X['weight']<0.05]['val'], bins=50, alpha=0.5, color='tab:blue', density=True, label='Outliers')
+plt.hist(X[X['weight']>0.05]['val'], bins=bins, alpha=0.5, color='tab:orange', density=True, label='Inliers')
 
 plt.legend()
 plt.xlabel("Household profit (USD PPP/Fortnite)")
