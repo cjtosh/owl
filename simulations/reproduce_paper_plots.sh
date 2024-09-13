@@ -29,19 +29,19 @@ do
     python simulations/gmm_simulation.py --seed $seed --corr_type 'max'
     python simulations/gmm_simulation.py --seed $seed --corr_type 'rand'
 
-    python simulations/bmm_simulation.py --seed $seed --corr_type 'max' --dataset 'simul'
-    python simulations/bmm_simulation.py --seed $seed --corr_type 'rand' --dataset 'simul'
+    python simulations/bmm_simulation.py --seed $seed --corr_type 'max'
+    python simulations/bmm_simulation.py --seed $seed --corr_type 'rand'
 
 
     ## Gaussian
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --n 200 --scale 10.0 --dim 2
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --n 200 --scale 10.0 --dim 2
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --dim 2
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --dim 2
 
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --n 200 --scale 10.0 --dim 25
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --n 200 --scale 10.0 --dim 25
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --dim 25
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --dim 25
 
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --n 200 --scale 10.0 --dim 50
-    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --n 200 --scale 10.0 --dim 50
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'max' --dim 50
+    python simulations/gaussian_simulations.py --seed $seed --corr_type 'rand' --dim 50
 done 
 
 ## RNA experiments
@@ -60,3 +60,4 @@ do
 done
 
 python simulations/plots.py
+python simulations/model_selection.py
