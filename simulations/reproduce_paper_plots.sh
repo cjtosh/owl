@@ -54,6 +54,7 @@ done
 ## Microcredit experiments
 python simulations/microcredit_initial.py
 
+## Warning: The following loop may take upto 13 days to run
 for i in {1..2500}
 do
     python simulations/microcredit_boot.py --i $i

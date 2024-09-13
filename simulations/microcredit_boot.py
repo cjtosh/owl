@@ -41,8 +41,8 @@ if __name__ == "__main__":
     fname = os.path.join(folder, str(eps) + "_" + str(seed) + ".pkl")
 
 
-    idx_core, = (weights>=1.0).nonzero()
-    idx_outliers, = (weights < 1.0).nonzero()
+    idx_core, = (weights>=0.05).nonzero()
+    idx_outliers, = (weights < 0.05).nonzero()
 
     sidx_core = np.random.choice(idx_core, replace=True, size=len(idx_core))
     sidx_outliers = np.random.choice(idx_outliers, replace=True, size=len(idx_outliers))
