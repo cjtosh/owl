@@ -28,7 +28,7 @@ if __name__ == "__main__":
     np.random.seed(seed)
     random.seed(seed)
 
-    df = pd.read_csv("data/microcredit.csv")
+    df = pd.read_csv("data/microcredit_weight.csv")
     X = df["treatment"].to_numpy()
     X = np.column_stack((X, np.ones(len(X))))
     y = df["profit"].to_numpy()
